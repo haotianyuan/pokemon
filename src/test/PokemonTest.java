@@ -63,34 +63,21 @@ public class PokemonTest {
 		assertTrue(caterpie.getBasicCapRate() < 1);
 		assertTrue(caterpie.getCapHpLimit() <100);
 		assertTrue(caterpie.getCapTurn() <20);
-		assertTrue(caterpie.getCurCapRate() < 1);
 		assertTrue(caterpie.getCurHP() < 1000);
-		assertTrue(caterpie.getCurMaxTurn() <50);
 		assertTrue(caterpie.getMaxHP() <2000);
 		assertTrue(caterpie.getBasicMaxTurn() < 50);
-		System.out.println(caterpie.getCurRunChance());
 		caterpie.setName("mike");
 		
 		caterpie.incrementHP(10);
 		caterpie.decrementHP(10);
-		caterpie.incrementCapRate(10.0);
-		caterpie.decrementCapRate(10.0);
-		caterpie.incrementRunChance(10.0);
-		caterpie.decrementRunChance(10.0);
-		caterpie.incrementMaxTurn(10);
-		caterpie.decrementMaxTurn(10);
 		caterpie.recordCapTurn(10);
 		assertTrue(caterpie.getBasicRunChance() < 1);
 		assertTrue(caterpie.getBasicCapRate() < 1);
 		assertTrue(caterpie.getCapHpLimit() <100);
 		assertTrue(caterpie.getCapTurn() <20);
-		assertTrue(caterpie.getCurCapRate() < 1);
 		assertTrue(caterpie.getCurHP() < 1000);
-		assertTrue(caterpie.getCurMaxTurn() <50);
 		assertTrue(caterpie.getMaxHP() <2000);
-		assertTrue(caterpie.getBasicMaxTurn() < 50);
-		System.out.println(caterpie.getCurRunChance());
-		
+		assertTrue(caterpie.getBasicMaxTurn() < 50);		
 
 		System.out.println(caterpie.recordMetDate());
 		assertEquals(caterpie.getSpecy(), Pokedex.Caterpie);
@@ -100,9 +87,11 @@ public class PokemonTest {
 		
 		for (int i = 0 ;i < 20; i ++){
 			caterpie.decrementHP(10);
+			/*
 			caterpie.decrementCapRate(10.0);
 			caterpie.decrementRunChance(10.0);
 			caterpie.decrementMaxTurn(10);
+			*/
 		}
 
 		

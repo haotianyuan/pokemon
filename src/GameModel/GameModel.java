@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Observable;
 
+import Inventory.Item;
 import Inventory.ItemType;
 import Map.*;
 import Mission.*;
@@ -56,6 +57,16 @@ public class GameModel extends Observable implements Serializable{
 		curTrainer.catchPokemon(new Mew("M"));
 		curTrainer.addItem(ItemType.CAPTURE_POTION_MEDIUM);
 		curTrainer.addItem(ItemType.STEP_POTION_LARGE);
+		curTrainer.addItem(ItemType.BAIT);
+		curTrainer.addItem(ItemType.BAIT);
+		curTrainer.addItem(ItemType.BAIT);
+		curTrainer.addItem(ItemType.BALL);
+		curTrainer.addItem(ItemType.BALL);
+		curTrainer.addItem(ItemType.BALL);
+		curTrainer.addItem(ItemType.ROCK);
+		curTrainer.addItem(ItemType.ROCK);
+		curTrainer.addItem(ItemType.ROCK);
+		curTrainer.addItem(ItemType.ROCK);
 	}
 		
 	public void setTrainer(Trainer trainer){
@@ -144,9 +155,9 @@ public class GameModel extends Observable implements Serializable{
 		super.notifyObservers();
 	}
 	
-	public void updateBattleView(ItemType type){
+	public void updateBattleView(Item item){
 		super.setChanged();
-		super.notifyObservers(type);
+		super.notifyObservers(item);
 	}
 	
 	// move the trainer
@@ -229,6 +240,42 @@ public class GameModel extends Observable implements Serializable{
 		}
 	}
 	
+	/************ algorithm to check if the pokemon is caught ************/
+	public boolean checkIfCaughtPokemon(Pokemon p){
+		// calculate the dynamic catch rate
+		if (Math.random() < calculateCurCaughtChance(p)){
+			return true;
+		}
+		else{
+			return false;
+		}
+		
+	}
+	
+	public double calculateCurCaughtChance(Pokemon p){
+		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getBasicCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		return chance;
+	}
+	
+	/************ algorithm to check if the pokemon will run ************/
+	public boolean checkIfRunPokemon(Pokemon p){
+		// check if below the alert hp line first
+		if (p.getCurHP() < p.getCapHpLimit()){
+			return true;
+		}
+		else if (Math.random() < calculateCurRunChance(p)){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	public double calculateCurRunChance(Pokemon p){
+		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getBasicRunChance()) * (1 - curTrainer.getReducedRun());
+		return chance;
+	}
+		
 	public void checkLost(){
 		this.isLost = mission.checkMissionFailed(curTrainer);
 	}

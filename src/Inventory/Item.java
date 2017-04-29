@@ -26,7 +26,8 @@ public abstract class Item implements Serializable{
 		this.type = type;
 	}
 	
-	public abstract void useItem(Object object);
+	public abstract boolean useItem(Object object);
+	public abstract boolean checkItemUsable(Object object);
 		
 	public abstract String getInfo();
 	

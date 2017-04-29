@@ -55,7 +55,7 @@ public class Map_BottomLeft extends Map{
 			for (int j = 0; j < this.getSize(); j ++){
 				// Obstacle around the map
 				if (map[i][j].getGround() == GroundType.SOIL && map[i][j].getObstacle() == ObstacleType.NONE){
-					map[i][j].setInteract(InteractType.SHORTGRASS);
+					map[i][j].setInteract(InteractType.SAND);
 				}
 			}
 		}

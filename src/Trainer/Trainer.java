@@ -34,7 +34,11 @@ public class Trainer implements Serializable{
 	// bonus attribute
 	private int bonusTurn;	// add bonus turn for capture the pokemon
 	private double bonusCapture;
-	private double bonusRun;
+	private double reducedRun;
+	
+	// battle field bonus attribute
+	private double battleBonusCapture;	// store the bonus capture rate during battle
+	private double battleReducedRun;	// store the reduced run chance during battle
 	
 	public Trainer(String id){
 		this.id = id;
@@ -45,7 +49,7 @@ public class Trainer implements Serializable{
 		this.inventory = new ItemCollection();
 		
 		this.bonusCapture = 0;
-		this.bonusRun = 0;
+		this.reducedRun = 0;
 		this.bonusTurn = 0;
 	}
 	
@@ -113,12 +117,12 @@ public class Trainer implements Serializable{
 	}
 	
 	
-	public void incrementBonusRun(double num){
-		this.bonusRun += num;
+	public void incrementReducedRun(double num){
+		this.reducedRun += num;
 	}
 	
-	public void decrementBonusRun(double num){
-		this.bonusRun -= num;
+	public void decrementReducedRun(double num){
+		this.reducedRun -= num;
 	}
 	
 	public int getStepCount(){
@@ -145,15 +149,19 @@ public class Trainer implements Serializable{
 		return this.bonusCapture;
 	}
 	
-	public double getBonusRun(){
-		return this.bonusRun;
+	public double getReducedRun(){
+		return this.reducedRun;
 	}
 	
 	public String getID(){
 		return this.id;
 	}
 	
-	public void useItem(int index, Object object){
-		inventory.useItem(index, object);
+	public boolean useItem(int index, Object object){
+		return inventory.useItem(index, object);
+	}
+	
+	public boolean checkItemUsable(int index, Object object){
+		return inventory.checkItemUsable(index, object);
 	}
 }

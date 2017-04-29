@@ -3,8 +3,9 @@ package Map;
 public enum InteractType {
 	SHORTGRASS(20), 
 	NONE(0), 
-	SAND(10), 
-	PORTAL(0);
+	SAND(50), 
+	PORTAL(0),
+	SWAMP(50);
 	
 	private final double basicEncounterRate;	// rate that user encounter pokemon upon these interact type
 	

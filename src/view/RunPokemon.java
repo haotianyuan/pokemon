@@ -125,6 +125,11 @@ public class RunPokemon extends JFrame {
 		initiatePokemonGame();
 		//timer = new Timer(delayInMillis, new MoveListener());
 		//timer.start();
+		// check if encounter a pokemon
+		// start the battle
+		if (gameModel.getTrainer().getCurEncounterPokemon() != null){
+			mainGamePanel.setVisible(false);
+		}
 	}
 		
 	private void initiatePokemonGame(){
@@ -309,6 +314,9 @@ public class RunPokemon extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			if (!battlePanel.InteractEnable()){
+				return;
+			}
 			String text = ((JButton) e.getSource()).getText();
 			if (text.equals("Use Item") && currentView.getClass() == MainGameView.class){
 				// check if there is any row selected
@@ -319,7 +327,7 @@ public class RunPokemon extends JFrame {
 				// interact with the selected row
 				int index = inventoryTable.convertRowIndexToModel(inventoryTable.getSelectedRow());
 				
-				gameModel.getTrainer().useItem(index, gameModel.getTrainer());
+				gameModel.getTrainer().useItem(index, gameModel.getTrainer());					
 				
 				// update the information table
 				updateInfoBoard();
@@ -336,20 +344,16 @@ public class RunPokemon extends JFrame {
 				}
 				// interact with the selected row
 				int index = inventoryTable.convertRowIndexToModel(inventoryTable.getSelectedRow());
-				//System.out.println("Using Item at row: " + index);
 				
 				// use the item
-				if (gameModel.getTrainer().getCurEncounterPokemon() != null ){
-					ItemType type = gameModel.getTrainer().getInventory().getItemType(index);
-					
-					//System.out.println(gameModel.getTrainer().getCurEncounterPokemon().getClass());
-					
-					gameModel.getTrainer().useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
-					gameModel.updateBattleView(type);
-					//System.out.println(gameModel.getTrainer().getCurEncounterPokemon().getClass());
-					//gameModel.useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
+				if (gameModel.getTrainer().getCurEncounterPokemon() != null ){					
+					// notify the battle view if successfully use the item
+					if (gameModel.getTrainer().checkItemUsable(index, gameModel.getTrainer().getCurEncounterPokemon())){
+						// use the item
+						gameModel.updateBattleView(gameModel.getTrainer().getInventory().getItem(index));
+						gameModel.getTrainer().useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
+					}
 				}
-				//System.out.println("Upadating Table");
 				// update the information table
 				updateInfoBoard();
 				
@@ -490,8 +494,11 @@ public class RunPokemon extends JFrame {
 					System.exit(0);
 				}
 				// if the user choose no, exit the program
-				else {
+				else if(userPrompt == JOptionPane.NO_OPTION) {
 					System.exit(0);
+				}
+				else{
+					return;
 				}
 			}
 		}
@@ -545,6 +552,8 @@ public class RunPokemon extends JFrame {
 				setViewTo(mainGamePanel);
 			}
 			else if (e.getComponent().getClass() == MainGameView.class){
+				// save the game before going into battle
+				saveData();
 				battlePanel.startBattle();
 				setViewTo(battlePanel);
 			}

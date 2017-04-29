@@ -49,11 +49,12 @@ public abstract class Pokemon implements Serializable{
 	private String name;
 	private String nickName;
 	private int curHP;
-	private double curCapRate;
-	private double curRunChance;
+	
+	//private double curCapRate;
+	//private double curRunChance;
 	
 	private int capHpLimit;	// the maximum hp allowed to be captured
-	private int curMaxTurn;
+	//private int curMaxTurn;	// individual max turn
 	private int captureTurn;	// store the turns spent on capture this pokemon
 	
 	
@@ -73,11 +74,11 @@ public abstract class Pokemon implements Serializable{
 		
 		// randomly generate capture rate
 		this.basicCapRate = randomCapRate(specy.getQuality().getCapRate());
-		this.curCapRate = this.basicCapRate;
+		//this.curCapRate = this.basicCapRate;
 		
 		// randomly generate run chance
 		this.basicRunChance = randomRunChance(specy.getQuality().getRunChance());
-		this.curRunChance = this.basicRunChance;
+		//this.curRunChance = this.basicRunChance;
 		
 		// randomly generate the maximum hp that allowed to be captured
 		this.capHpLimit = randomCapHP(this.maxHP);
@@ -85,7 +86,7 @@ public abstract class Pokemon implements Serializable{
 		this.basicMaxTurn = specy.getQuality().getMaxTurn();
 		
 		this.captureTurn = 0;
-		this.curMaxTurn = 0;
+		//this.curMaxTurn = 0;
 
 	}
 	
@@ -152,15 +153,7 @@ public abstract class Pokemon implements Serializable{
 	public double getBasicRunChance(){
 		return this.basicRunChance;
 	}
-	
-	public double getCurCapRate(){
-		return this.curCapRate;
-	}
-	
-	public double getCurRunChance(){
-		return this.curRunChance;
-	}
-	
+		
 	public int getCapHpLimit(){
 		return this.capHpLimit;
 	}
@@ -173,9 +166,6 @@ public abstract class Pokemon implements Serializable{
 		return this.basicMaxTurn;
 	}
 	
-	public int getCurMaxTurn()	{
-		return this.curMaxTurn;
-	}
 	
 	// setter for the parameter
 	public void setName(String newName){
@@ -194,6 +184,20 @@ public abstract class Pokemon implements Serializable{
 		if (this.curHP < 0){
 			this.curHP = 0;
 		}
+	}
+	
+	/**************** No longer using this algorithm *******************/
+	/*
+		public double getCurCapRate(){
+		return this.curCapRate;
+	}
+	
+	public double getCurRunChance(){
+		return this.curRunChance;
+	}
+	
+	public int getCurMaxTurn()	{
+		return this.curMaxTurn;
 	}
 	
 	public void incrementCapRate(double incre){
@@ -235,6 +239,7 @@ public abstract class Pokemon implements Serializable{
 			this.curMaxTurn = 0;
 		}
 	}
+	*/
 		
 	public void recordCapTurn(int turn){
 		this.captureTurn = turn;

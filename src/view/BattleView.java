@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +19,8 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import GameModel.Direction;
 import GameModel.GameModel;
-import Inventory.ItemType;
+import Inventory.*;
 import Map.GroundType;
 import Pokemon.Pokedex;
 import Pokemon.Pokemon;
@@ -36,6 +36,7 @@ public class BattleView extends JPanel implements Observer{
 	private BufferedImage menuSheet;
 	private BufferedImage barSheet;
 	private BufferedImage trainerSheet;
+	private BufferedImage itemSheet;
 	
 	// game model
 	private GameModel model;
@@ -48,7 +49,7 @@ public class BattleView extends JPanel implements Observer{
 	// declare variables for animation
 	private boolean battleEnd = true;	// flag to show that the battle is end
 	
-	private final static int delayInMillis = 15;
+	private final static int delayInMillis = 10;
 	private final static double PixelPerFrame = 4;
 	private final static int MoveInPixel = 300;		// store the pixel that trainer and pokemon move in
 		
@@ -58,6 +59,7 @@ public class BattleView extends JPanel implements Observer{
 	private int trainerMidLocation_Y;
 	private int trainerCurWidth;
 	private int trainerCurHeight;
+	private Point trainerUpperLeft = new Point();
 	
 	// location for the pokemon on the battlefield
 	private final static int PokemonStartLocation_X = 53;
@@ -65,8 +67,22 @@ public class BattleView extends JPanel implements Observer{
 	private int pokemonMidLocation_Y;
 	private int pokemonCurWidth;
 	private int pokemonCurHeight;
+	private Point pokemonUpperLeft = new Point();
 	
-	private ItemType usingItemType = null;
+	// location for item on the battlefield
+	private final static int ItemStartCenterLocation_X = 173;
+	private final static int ItemStartCenterLocation_Y = 115;
+	private final static int ItemFinalCenterLocation_X = 353;
+	private final static int ItemFinalCenterLocation_Y = 100;
+	private Point itemUpperLeft = new Point();
+	private int itemCurWidth;
+	private int itemCurHeight;
+	
+	// status and location for effect of the pokemon
+	private boolean isBaited = false;
+	private boolean isRocked = false;
+	
+	private Class<?> usingItemClass = null;
 		
 	
 	// constructor
@@ -77,6 +93,7 @@ public class BattleView extends JPanel implements Observer{
 		this.addMouseListener(new ClickListener());
 	}
 	
+	/**************** observer ****************/
 	@Override
 	public void update(Observable o, Object arg) {
 		if (battleEnd == false){
@@ -89,20 +106,18 @@ public class BattleView extends JPanel implements Observer{
 			}
 			
 			// play use item animation
-			if(arg != null && !itemUsingStarted){
+			if(arg != null){
+				curTurn++;
 				// raise the item using flag				
-				usingItemType = (ItemType) arg;
-				playItemAnimation(usingItemType);
-				System.out.println(usingItemType.getClass().getName());
-				// TODO: need item animation
-			}
-			
-			
+				usingItemClass = ((Item) arg).getClass();
+				playItemAnimation();
+			}			
 			repaint();
 		}
 		
 	}
-					
+
+	/**************** Initiate Data ****************/
 	// initiate the data when the battle begin
 	private void initData(){
 		// initiate the data when construct it
@@ -115,20 +130,11 @@ public class BattleView extends JPanel implements Observer{
 		
 		// get the encountered pokemon
 		setCurPokemon(model.getTrainer().getCurEncounterPokemon());
-		
-		// calcualte and set the data for pokemon basing on the trainer data
-		double bonusRunChance = model.getTrainer().getBonusRun();
-		double bonusCapRate = model.getTrainer().getBonusCapture();
-		int bonusTurn = model.getTrainer().getBonusTurn();
-				
-		curPokemon.incrementCapRate(bonusCapRate);
-		curPokemon.decrementRunChance(bonusRunChance);
-		curPokemon.incrementMaxTurn(bonusTurn);
 	}
 	
 	// this will be called in initiation
 	private void resetData(){
-		usingItemType = null;	// reset the using item
+		usingItemClass = null;	// reset the using item class
 		curTurn = 0;	// reset the turn count
 
 		// Date for the opening animation
@@ -138,8 +144,14 @@ public class BattleView extends JPanel implements Observer{
 		// location for the pokemon on the battlefield
 		pokemonMidLocation_X = PokemonStartLocation_X;
 		pokemonMidLocation_Y = BattleField_Height - 60;
-	}
 		
+		// reset upperleft point
+		trainerUpperLeft = new Point();
+		pokemonUpperLeft = new Point();
+		itemUpperLeft = new Point();
+	}
+	
+	/**************** Tool ****************/
 	public void setCurPokemon(Pokemon pokemon){
 		this.curPokemon = pokemon;
 	}
@@ -151,12 +163,20 @@ public class BattleView extends JPanel implements Observer{
 	
 	private void endBattle(){
 		battleEnd = true;
+		curPokemon = null;
 		model.getTrainer().setCurEncounterPokemon(null);
 		model.setEncounteredThisBlock(false);
+		generalTimer.stop();
+		generalCounter = 0;
+	}
+	
+	public boolean InteractEnable(){
+		return openingEnd && itemUsingEnd && itemFlyEnd && itemEffectEnd;
 	}
 	
 	
-		
+	
+	/**************** Click Listener ****************/
 	// click on run set the visibility of the view and raise the end flag
 	private class ClickListener implements MouseListener {
 		private final static int RunButtonHeight = 30;
@@ -175,7 +195,7 @@ public class BattleView extends JPanel implements Observer{
 				//int y = e.getY();
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
 						&& y >= 320 - RunButtonHeight - RunButtonHeight_OFFSET && y < 320 - RunButtonHeight_OFFSET){
-					//System.out.println("Click on: " + x + ", " + y);
+					System.out.println("Click on: " + x + ", " + y);
 					endBattle();
 					setVisible(false);
 				}
@@ -215,105 +235,18 @@ public class BattleView extends JPanel implements Observer{
 	 * *************************************** *
 	 */
 	
-	//////////////////////////// Draw Move In Animation /////////////////////////////
-	
-	public boolean InteractEnable(){
-		return openingEnd && itemUsingEnd;
-	}
-	
-	/******** Opening of the Battle *******/
-	private boolean openingStarted = false;	// flag to check if the openning animation has been played
-	private boolean openingEnd = true;	// flag to check if the moving animation is over and enable the listener
-	private void playOpeningAnimation(){
-		openingStarted = true;
-		openingEnd = false;		
-		startMoveInTimer();
-	}
-	
-	/************* Move In Timer at the opening*************/
-	private Timer moveInTimer;
-	private int moveInCounter;
-	
-	private void startMoveInTimer() {
-		moveInCounter = 0;
-		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
-		moveInTimer.start();
-	}
-	
-	private class moveInTimerListener implements ActionListener {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			
-			//System.out.println(moveInCounter + "");
-			
-			if (moveInCounter < MoveInPixel/PixelPerFrame){
-				moveInCounter++;
-				// set the location of the trainer and the pokemon
-				trainerMidLocation_X -= PixelPerFrame;
-				
-				// pokemon move in later
-				if (moveInCounter < 50){
-					pokemonMidLocation_X += (int)(PixelPerFrame * 1.5);
-				}
-				repaint();
-			}
-			else{
-				openingEnd = true;
-				moveInTimer.stop();
-				moveInCounter = 0;
-			}
-			
-		}
-	}
-	
-	/******** Using an Item and play effect *******/
-	private boolean itemUsingStarted = false;	// flag to check if using item animation started
-	private boolean itemUsingEnd = true;
-	private void playItemAnimation(ItemType type){
-		itemUsingStarted = true;
-		itemUsingEnd = false;
-	}
-	
-	/************* Item Timer *************/
-	private Timer itemTimer;
-	private int itemCounter;
-	
-	private void startItemTimer() {
-		itemCounter = 0;
-		itemTimer = new Timer(delayInMillis, new itemTimerListener());
-		itemTimer.start();
-	}
-	
-	private class itemTimerListener implements ActionListener {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			
-			//System.out.println(moveInCounter + "");
-			
-			if (itemCounter < MoveInPixel/PixelPerFrame){
-				// TODO: algorithm to draw the curve
-
-				repaint();
-			}
-			else{
-				openingEnd = true;
-				moveInTimer.stop();
-				moveInCounter = 0;
-			}
-			
-		}
-	}
-	
-	/////////////////////////// Define sprite sheet name ///////////////////////////
+		
+	/**************** Define sprite sheet name ****************/
 	private static final String pokemonTextureFileName = "pokemon_pokemons.png";
 	private static final String trainerTextureFileName = "pokemon_trainer.png";
 	private static final String effectTextureFileName = "pokemon_effect.png";
 	private static final String battleMenuFileName = "pokemon_battle_menu.png";
 	private static final String hpBarFileName = "pokemon_hpbar.png";
 	private static final String battleFieldFileName = "pokemon_battle_field.png";
+	private static final String itemTextureFileName = "pokemon_item.png";
 	
+ 		
+	/********************** Load Image **********************/
 	private final void loadImages(){
 		loadPokemonTexture();
 		loadTrainerTexture();
@@ -321,10 +254,9 @@ public class BattleView extends JPanel implements Observer{
 		loadMenuTexture();
 		loadHpBarTexture();
 		loadBattleField();
+		loadItemTexture();
 		generateOFFSETList();
 	}
-	
-	// function to load images sheet
 	
 	private void loadPokemonTexture() {
 		// try to open the file of pokemon textures
@@ -405,6 +337,19 @@ public class BattleView extends JPanel implements Observer{
 			System.out.println("Could not find: " + hpBarFileName);
 		}	
 	}
+	
+	private void loadItemTexture() {
+		// try to open the file of the item texture
+		try{
+			File itemTextureFile = new File("images" + File.separator + 
+					"Texture" + File.separator + 
+					itemTextureFileName);
+			itemSheet = ImageIO.read(itemTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + itemTextureFileName);
+		}	
+	}
 
 
 	// define the upper left point for all pokemon on the sheet
@@ -450,7 +395,8 @@ public class BattleView extends JPanel implements Observer{
 	}
 	
 	
-	////////////////////// Draw Battle Field /////////////////////////////
+	/********************** Draw Battle Field **********************/
+	
 	private final static int BattleField_Height = 224;
 	private final static int BattleField_Width = 480;
 	
@@ -481,7 +427,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	
 	
-	////////////////////// Draw Battle Menu /////////////////////////////
+	/********************** Draw Battle Menu **********************/
 	private final static int BattleMenu_Height = 96;
 	private final static int BattleMenu_Width = 480;
 	
@@ -496,13 +442,13 @@ public class BattleView extends JPanel implements Observer{
 	
 	
 	
-	////////////////////// Draw Trainer /////////////////////////////
+	/********************** Draw Trainer **********************/
 	private final static int Trainer_Height = 98;
 	
 	private final static int Trainer_Steady_Width = 76;
 	private final static int Trainer_Throw01_Width = 128;
 	private final static int Trainer_Throw02_Width = 106;
-	private final static int Trainer_Throw03_Width = 132;
+	private final static int Trainer_Throw03_Width = 131;
 	private final static int Trainer_Throw04_Width = 112;
 	
 	private final static int Trainer_OFFSET_Y = 365;
@@ -516,14 +462,49 @@ public class BattleView extends JPanel implements Observer{
 	private BufferedImage drawTrainer(){
 		// set the corresponding height
 		trainerCurHeight = Trainer_Height;
+		trainerUpperLeft = getTrainerUpperLeft();
 		
 		// trainer remain steady during the movie in
-		if (!openingEnd){
+		if (openingStarted && !openingEnd){
 			// set the corresponding width
 			trainerCurWidth = Trainer_Steady_Width;
 			return trainerSheet.getSubimage(Trainer_Steady_OFFSET_X, Trainer_OFFSET_Y, 
 					Trainer_Steady_Width, Trainer_Height);
 		}
+		// draw the animation during using item
+		else if (itemUsingStarted && !itemUsingEnd){			
+			// play throw frame 01
+			if (itemUsingCounter  == 1){
+				trainerCurWidth = Trainer_Throw01_Width;
+				return trainerSheet.getSubimage(Trainer_Throw01_OFFSET_X, Trainer_OFFSET_Y, 
+						Trainer_Throw01_Width, Trainer_Height);				
+			}
+			// play throw frame 02
+			else if (itemUsingCounter == 2){
+				trainerCurWidth = Trainer_Throw02_Width;
+				return trainerSheet.getSubimage(Trainer_Throw02_OFFSET_X, Trainer_OFFSET_Y, 
+						Trainer_Throw02_Width, Trainer_Height);				
+			}
+			// play throw frame 03
+			else if (itemUsingCounter >= 3 && itemUsingCounter <= 5 ){
+				trainerCurWidth = Trainer_Steady_Width;
+				return trainerSheet.getSubimage(Trainer_Throw03_OFFSET_X, Trainer_OFFSET_Y, 
+						Trainer_Throw03_Width, Trainer_Height);				
+			}
+			// play throw frame 04
+			else if (itemUsingCounter >= 5 && itemUsingCounter <= 6){
+				trainerCurWidth = Trainer_Steady_Width;
+				return trainerSheet.getSubimage(Trainer_Throw04_OFFSET_X, Trainer_OFFSET_Y, 
+						Trainer_Throw04_Width, Trainer_Height);				
+			}
+			// remain steady at the beginning and the end
+			else{
+				trainerCurWidth = Trainer_Steady_Width;
+				return trainerSheet.getSubimage(Trainer_Steady_OFFSET_X, Trainer_OFFSET_Y, 
+						Trainer_Steady_Width, Trainer_Height);
+			}
+		}
+		// remain steady the rest of the time
 		else{
 			return trainerSheet.getSubimage(Trainer_Steady_OFFSET_X, Trainer_OFFSET_Y, 
 					Trainer_Steady_Width, Trainer_Height);
@@ -536,6 +517,11 @@ public class BattleView extends JPanel implements Observer{
 		p.setLocation(trainerMidLocation_X - trainerCurWidth/2, trainerMidLocation_Y - trainerCurHeight);
 		return p;
 	}
+		
+	
+	/********************** Draw Pokemon **********************/
+	private final static int Pokemon_Height = 126;
+	private final static int Pokemon_Width = 126;
 	
 	// return the upper left point of the pokemon
 	private Point getPokemonUpperLeft(){
@@ -544,19 +530,21 @@ public class BattleView extends JPanel implements Observer{
 		return p;
 	}
 	
-	
-	////////////////////// Draw Pokemon /////////////////////////////
-	private final static int Pokemon_Height = 126;
-	private final static int Pokemon_Width = 126;
-	
 	private BufferedImage drawPokemon(Pokedex type){
 		pokemonCurHeight = Pokemon_Height;
 		pokemonCurWidth = Pokemon_Width;
+		pokemonUpperLeft = getPokemonUpperLeft();
 		
+		// check if the openning animation has end
+		// draw the pokemon
 		// pokemon remain steady during the movie in
-		// and scream at you at the end
-		if (!openingEnd){
-			if (moveInCounter > 50){
+		if (openingStarted && !openingEnd){
+			// the pokemon move in later
+			if (moveInCounter <= 5){
+				return null;
+			}
+			// the pokemon play animation 
+			else if (moveInCounter > 50){
 				if (moveInCounter < 73){
 					return drawPokemonB(type);
 				}
@@ -564,10 +552,21 @@ public class BattleView extends JPanel implements Observer{
 					return drawPokemonA(type);
 				}
 			}
-			return drawPokemonA(type);
+			// remain steady reset of the time
+			else{
+				return drawPokemonA(type);
+			}
 		}
 		else{
-			return null;
+			if (generalCounter >= 21 && generalCounter <= 23){
+				return drawPokemonB(type);
+			}
+			else if (generalCounter >= 25 && generalCounter <= 27){
+				return drawPokemonB(type);
+			}
+			else{
+				return drawPokemonA(type);
+			}
 		}
 	}
 	
@@ -585,8 +584,392 @@ public class BattleView extends JPanel implements Observer{
 				Pokemon_Width, Pokemon_Height);
 	}
 	
+	/********************** Draw Item Flying **********************/
+	//////////////// Overall Item ///////////////
+	// define the rotation angle of the item and the offset of its center
+	private double itemRotationRadian = 0;	
+	private int item_Center_OFFSET_X = 0;
+	private int item_Center_OFFSET_Y = 0;
+	private final static int ItemFlyingFrame = 21;
+	
+	private Point getItemUpperLeft(){
+		if (itemFlyCounter < ItemFlyingFrame){
+			Point p = new Point();
+			Point temp = calculateItemFlyingPath(itemFlyCounter);
+			p.setLocation(temp.x - itemCurWidth/2, temp.y - itemCurHeight/2);
+			return p;
+		}
+		else{
+			Point p = new Point();
+			p.setLocation(ItemFinalCenterLocation_X - itemCurWidth/2, ItemFinalCenterLocation_Y - itemCurHeight/2);
+			return p;
+		}
+	}
+	
+	// draw the image according to the item class
+	private BufferedImage drawItemFly(Class<?> itemClass){
+		if (itemClass.isAssignableFrom(SafariBall.class)){
+			return drawItem_Ball();
+		}
+		else if (itemClass.isAssignableFrom(Bait.class)){
+			return drawItem_Bait();
+		}
+		else if (itemClass.isAssignableFrom(Rock.class)){
+			return drawItem_Rock();
+		}
+		else{
+			return null;
+		}
+	}
+	
+	// calculate the location of the item on the path
+	private Point calculateItemFlyingPath(int counter){
+		int x = 180 / (ItemFlyingFrame - 1) * counter + ItemStartCenterLocation_X;
+		double dx = (double) (x - ItemStartCenterLocation_X);
+		//double y = -1 * 79 * dx * dx / 14742 + 1853 * dx / 1638;
+		double y = 499 * dx / 468 - 23 * dx * dx / 4212;
+		
+		//System.out.println("Ball Location: " + x + ", " + y);
+		//System.out.println("	Equation: " + a + ", " + b);
+		
+		double y_real = ItemStartCenterLocation_Y - y;
+		
+		// cast y to int
+		Point p = new Point();
+		p.setLocation(x, (int) y_real);
+		return p;
+	}
+	
+	//////////////// Ball ////////////////
+	private final static int Ball_Regular_Height = 28;
+	private final static int Ball_Regular_Width = 28;
+	
+	private final static int Ball_Regular_OFFSET_X = 124;
+	private final static int Ball_Regular_OFFSET_Y = 40;
+		
+	private BufferedImage drawItem_Ball(){
+		if (itemFlyStarted && !itemFlyEnd){
+			itemUpperLeft = getItemUpperLeft();
 			
-	// draw the battle
+			// set the width and height
+			itemCurHeight = Ball_Regular_Height;
+			itemCurWidth = Ball_Regular_Width;
+						
+			// calculate the ball position
+			if (itemFlyStarted && !itemFlyEnd){				
+				// set the angle
+				itemRotationRadian = Math.toRadians(itemFlyCounter * 54);
+				
+				/*
+				BufferedImage image = trainerSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
+						Ball_Regular_Width, Ball_Regular_Height);
+				return op.filter(image, null);
+				*/
+			}		
+			return itemSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
+					Ball_Regular_Width, Ball_Regular_Height);	
+		}
+		else{
+			return null;
+		}
+	}
+	
+	//////////////// BAIT ////////////////
+	private final static int Bait_Regular_Height = 34;
+	private final static int Bait_Regular_Width = 34;
+	
+	private final static int Bait_Regular_OFFSET_X = 217;
+	private final static int Bait_Regular_OFFSET_Y = 590;
+		
+	private BufferedImage drawItem_Bait(){
+		if (itemFlyStarted && !itemFlyEnd){
+			itemUpperLeft = getItemUpperLeft();
+			
+			// set the width and height
+			itemCurHeight = Bait_Regular_Height;
+			itemCurWidth = Bait_Regular_Width;
+						
+			// calculate the ball position
+			if (itemFlyStarted && !itemFlyEnd){				
+				// set the angle
+				itemRotationRadian = Math.toRadians(itemFlyCounter * 108);
+			}		
+			return effectSheet.getSubimage(Bait_Regular_OFFSET_X, Bait_Regular_OFFSET_Y, 
+					Bait_Regular_Width, Bait_Regular_Height);	
+		}
+		else{
+			return null;
+		}
+	}
+	
+	
+	//////////////// ROCK ////////////////
+	private final static int Rock_Regular_Height = 36;
+	private final static int Rock_Regular_Width = 36;
+	
+	private final static int Rock_Regular_OFFSET_X = 1030;
+	private final static int Rock_Regular_OFFSET_Y = 125;
+		
+	private BufferedImage drawItem_Rock(){
+		if (itemFlyStarted && !itemFlyEnd){
+			itemUpperLeft = getItemUpperLeft();
+			
+			// set the width and height
+			itemCurHeight = Rock_Regular_Height;
+			itemCurWidth = Rock_Regular_Width;
+						
+			// calculate the ball position
+			if (itemFlyStarted && !itemFlyEnd){				
+				// set the angle
+				itemRotationRadian = Math.toRadians(itemFlyCounter * 108);
+			}		
+			return effectSheet.getSubimage(Rock_Regular_OFFSET_X, Rock_Regular_OFFSET_Y, 
+					Rock_Regular_Width, Rock_Regular_Height);	
+		}
+		else{
+			return null;
+		}
+	}
+	
+	
+	/**************** Draw Item Effect ****************/
+	private int effect_Center_OFFSET_X = 0;
+	private int effect_Center_OFFSET_Y = 0;
+	private int effectRoationRadian = 0;
+	private final static int EffectFrame = 10;
+	
+	private final static int Effect_Punch_Heavy_Width = 40;
+	private final static int Effect_Punch_Heavy_Height = 36;
+	private final static int Effect_Punch_Heavy_OFFSET_X = 960;
+	private final static int Effect_Punch_Heavy_OFFSET_Y = 449;
+	
+	private final static int Effect_Punch_Light_Width = 22;
+	private final static int Effect_Punch_Light_Height = 24;
+	private final static int Effect_Punch_Light_OFFSET_X = 962;
+	private final static int Effect_Punch_Light_OFFSET_Y = 500;
+	
+	
+	/******************* Draw Move In Animation ******************/
+	
+	///////// Opening of the Battle /////////
+	private boolean openingStarted = false;	// flag to check if the openning animation has been played
+	private boolean openingEnd = true;	// flag to check if the moving animation is over and enable the listener
+	private void playOpeningAnimation(){
+		openingStarted = true;
+		openingEnd = false;		
+		startMoveInTimer();
+	}
+	
+	///////// Move In Timer at the opening /////////
+	private Timer moveInTimer;
+	private int moveInCounter;
+	
+	private void startMoveInTimer() {
+		moveInCounter = 0;
+		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
+		moveInTimer.start();
+	}
+	
+	private class moveInTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			//System.out.println(moveInCounter + "");
+			
+			if (moveInCounter < MoveInPixel/PixelPerFrame){
+				// set the location of the trainer and the pokemon
+				trainerMidLocation_X -= PixelPerFrame;
+				
+				// pokemon move in later
+				if (moveInCounter < 50){
+					pokemonMidLocation_X += (int)(PixelPerFrame * 1.5);
+				}
+				repaint();
+				moveInCounter++;
+			}
+			else{
+				openingEnd = true;
+				moveInTimer.stop();
+				moveInCounter = 0;
+				
+				// start general timer
+				startGeneralTimer();
+				
+			}
+			
+		}
+	}
+	
+	/******************* Draw Using Item Animation ******************/
+	private boolean itemUsingStarted = false;	// flag to check if using item animation started
+	private boolean itemUsingEnd = true;
+	private void playItemAnimation(){
+		itemUsingStarted = true;
+		itemUsingEnd = false;
+		startItemUsingTimer();
+	}
+	
+	//////////// Item Timer ////////////
+	private Timer itemUsingTimer;
+	private int itemUsingCounter;
+	
+	private void startItemUsingTimer() {
+		itemUsingCounter = 0;
+		itemUsingTimer = new Timer(delayInMillis * 11, new itemUsingTimerListener());
+		itemUsingTimer.start();
+	}
+	
+	private class itemUsingTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			if (itemUsingCounter < 10){
+				
+				//System.out.println(itemUsingCounter + "");
+				if (itemUsingCounter < 4){
+					repaint();
+				}
+				itemUsingCounter ++;
+				
+				// start to draw the flying item
+				if (itemUsingCounter == 4){
+					// draw the item effect
+					playItemFlyAnimation();
+				}
+			}
+			else{
+				itemUsingEnd = true;
+				itemUsingStarted = false;
+				itemUsingTimer.stop();
+				itemUsingCounter = 0;
+			}
+			
+		}
+	}
+	
+	
+	/******************* Draw Item Fly Animation ******************/
+	private boolean itemFlyStarted = false;	// flag to check if using item animation started
+	private boolean itemFlyEnd = true;
+	private void playItemFlyAnimation(){
+		itemFlyStarted = true;
+		itemFlyEnd = false;
+		startItemFlyTimer();
+	}
+	
+	//////////// Item Timer ////////////
+	private Timer itemFlyTimer;
+	private int itemFlyCounter;
+	
+	private void startItemFlyTimer() {
+		itemFlyCounter = 0;
+		itemFlyTimer = new Timer(delayInMillis * 4, new itemFlyTimerListener());
+		itemFlyTimer.start();
+	}
+	
+	private class itemFlyTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			// play flying track and play effect
+			if (itemFlyCounter < ItemFlyingFrame){
+				//System.out.println(itemEffectCounter + "");
+				repaint();
+				itemFlyCounter ++;
+			}
+
+			else{
+				itemFlyEnd = true;
+				itemFlyStarted = false;
+				itemFlyTimer.stop();
+				itemFlyCounter = 0;
+				
+				// check the item use result
+				
+			}
+			
+		}
+	}
+	
+	/******************* Draw Item Effect Animation ******************/
+	private boolean itemEffectStarted = false;	// flag to check if using item animation started
+	private boolean itemEffectEnd = true;
+	private void playItemEffectAnimation(){
+		itemEffectStarted = true;
+		itemEffectEnd = false;
+		startItemEffectTimer();
+	}
+	
+	//////////// Item Timer ////////////
+	private Timer itemEffectTimer;
+	private int itemEffectCounter;
+	
+	private void startItemEffectTimer() {
+		itemEffectCounter = 0;
+		itemEffectTimer = new Timer(delayInMillis * 9, new itemEffectTimerListener());
+		itemEffectTimer.start();
+	}
+	
+	private class itemEffectTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			// play flying track and play effect
+			if (itemEffectCounter < 10){
+				//System.out.println(itemEffectCounter + "");
+				repaint();
+				itemFlyCounter ++;
+			}
+			else{
+				itemEffectEnd = true;
+				itemEffectStarted = false;
+				itemEffectTimer.stop();
+				itemEffectCounter = 0;
+				
+				// check the item use result
+				
+			}
+			
+		}
+	}
+	
+	
+	/**************** Overall Timer *****************/
+	////////////Item Timer ////////////
+	private Timer generalTimer;
+	private int generalCounter;
+
+	private void startGeneralTimer() {
+		generalCounter = 0;
+		generalTimer = new Timer(delayInMillis * 10, new generalTimerListener());
+		generalTimer.start();
+	}
+
+	private class generalTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			generalCounter ++;
+			// reset the counter when go beyond 50
+			if (generalCounter > 50){
+				generalCounter = 0;
+			}		
+			
+			if (InteractEnable()){
+				repaint();
+			}
+		
+		}
+	
+	}
+	
+			
+	/**************** Paint function ****************/
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
 		
@@ -597,34 +980,28 @@ public class BattleView extends JPanel implements Observer{
 			return;
 		}
 		
+		//System.out.println("Pokemon Mid Location: " + pokemonMidLocation_X + ", " + pokemonMidLocation_Y);
+		
 		// draw the back ground
 		g2.drawImage(drawBattleField(GroundType.GRASSLAND), 0, 0, null);
 		g2.drawImage(drawBattleMenu(), 0, BattleField_Height, null);
 		
-		// check if the openning animation has end
-		// draw the move in trainer and pokemon
-		if (openingStarted && !openingEnd){
-			//System.out.println("Counter: " + moveInCounter + ",  Trainer Drawing at: " + getTrainerUpperLeft().x + ", " + getTrainerUpperLeft().y);
-			
-			// pokemon move in later
-			if (moveInCounter > 5){
-				g2.drawImage(drawPokemon(curPokemon.getSpecy()), getPokemonUpperLeft().x, getPokemonUpperLeft().y, null);
-				//System.out.println("Counter: " + moveInCounter + ",  Pokemon Drawing at: " + getPokemonUpperLeft().x + ", " + getPokemonUpperLeft().y +
-						//",  " + curPokemon.getSpecy().getName());
-			}
-			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
-			
+
+		// draw the trainer and pokemon
+		g2.drawImage(drawPokemon(curPokemon.getSpecy()), pokemonUpperLeft.x, pokemonUpperLeft.y, null);
+		g2.drawImage(drawTrainer(), trainerUpperLeft.x, trainerUpperLeft.y, null);
+		
+		// draw item and effect
+		// set the transform
+		if (itemFlyStarted && !itemFlyEnd){
+			// rotate the item
+			BufferedImage img = drawItemFly(usingItemClass);
+			AffineTransform trans = AffineTransform.getTranslateInstance(itemUpperLeft.x, itemUpperLeft.y);
+			trans.rotate(itemRotationRadian, itemCurWidth/2, itemCurHeight/2);
+			g2.drawImage(img, trans, null);
+			System.out.println("Item Mid Location: " + itemUpperLeft.x + ", " + itemUpperLeft.y);
 		}
-		// draw the item using animation
-		else if (itemUsingStarted && !itemUsingEnd){
-			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
-			g2.drawImage(drawPokemonA(curPokemon.getSpecy()), getPokemonUpperLeft().x, getPokemonUpperLeft().y, null);
-		}
-		// draw stand-by status
-		else{
-			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
-			g2.drawImage(drawPokemonA(curPokemon.getSpecy()), getPokemonUpperLeft().x, getPokemonUpperLeft().y, null);
-		}
+		//g2.drawImage(drawItemFly(usingItemType), itemUpperLeft.x, itemUpperLeft.y, null);
 	}
 
 }

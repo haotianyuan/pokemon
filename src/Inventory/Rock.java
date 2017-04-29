@@ -1,34 +1,38 @@
 package Inventory;
 
 import Pokemon.Pokemon;
+import Trainer.Trainer;
 
-public class HealPotion extends Item{
+public class Rock extends Item{
 
-	private static final long serialVersionUID = -6731421041395451866L;
+	private static final long serialVersionUID = -4794400599819801264L;
+
+	private double reducedCurHpAmount;
 	
-	private int restoreAmount;	// store the amount of health restored for the pokemon
+	// extra
+	private double reducedRunChance;
 	
-	public HealPotion(int amount, String name, ItemType type){
-		super(name, type);
-		this.restoreAmount = amount;
+
+
+	// constructor
+	public Rock(){
+		super("Rock", ItemType.ROCK);
 	}
-	
+
 	@Override
 	public String getInfo() {
-		return "restore " + this.restoreAmount + " health to the selected pokemon";
+		return "This is a rock";
 	}
 
 	@Override
 	public boolean useItem(Object object) {
 		if (checkItemUsable(object)){
 			this.decrement(1);
-			((Pokemon) object).incrementHP(this.restoreAmount);		
 			return true;
 		}
 		else{
 			return false;
 		}
-
 	}
 	
 	@Override
@@ -40,7 +44,6 @@ public class HealPotion extends Item{
 			System.out.println("You cannot use this item out of battle");
 			return false;
 		}
-
 	}
 
 }

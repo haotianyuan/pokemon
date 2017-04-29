@@ -18,27 +18,55 @@ public class ItemCollection implements TableModel, Serializable{
 	private ArrayList<Item> itemList;
 	
 	public ItemCollection(){
-		this.itemList = new ArrayList<Item>();
-		addItem(ItemType.BALL);
-		addItem(ItemType.BALL);
-		addItem(ItemType.BALL);
-		
+		this.itemList = new ArrayList<Item>();		
 	}
 	
 	// use the selected item
-	public void useItem(int index, Object object){
-		System.out.println(object.getClass());
+	public boolean useItem(int index, Object object){
+		/*
 		if (object.getClass() == Trainer.class){
-			itemList.get(index).useItem((Trainer) object);
+			
+			boolean result = itemList.get(index).useItem((Trainer) object);
+			
+			// check the number of the item, remove it if it is zero
+			if (itemList.get(index).getCount() == 0){
+				itemList.remove(index);
+			}
+			return result;
 		}
 		else if (Pokemon.class.isInstance(object)){
-			System.out.println("Using upon pokemon");
-			itemList.get(index).useItem((Pokemon) object);
+			//System.out.println("Using upon pokemon");
+			
+			boolean result = itemList.get(index).useItem((Pokemon) object);
+			
+			// check the number of the item, remove it if it is zero
+			if (itemList.get(index).getCount() == 0){
+				itemList.remove(index);
+			}
+			
+			return result;
 		}
-		// check the number of the item, remove it if it is zero
-		if (itemList.get(index).getCount() == 0){
-			itemList.remove(index);
+		else{
+			return false;
 		}
+		*/
+		if (checkItemUsable(index, object)){
+			itemList.get(index).useItem(object);
+			
+			// check the number of the item, remove it if it is zero
+			if (itemList.get(index).getCount() == 0){
+				itemList.remove(index);
+			}
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	// check if the item is usable
+	public boolean checkItemUsable(int index, Object object){
+		return itemList.get(index).checkItemUsable(object);
 	}
 	
 	public ItemType getItemType(int index){
@@ -55,14 +83,22 @@ public class ItemCollection implements TableModel, Serializable{
 		}
 		
 		// create a new item and add into the list
-		this.itemList.add(this.createType(type));
+		this.itemList.add(this.createItem(type));
 		return;
 		
 	}
 	
-	private Item createType(ItemType type){
+	private Item createItem(ItemType type){
 		if (type == ItemType.BALL){
 			return new SafariBall();
+		}
+		
+		if (type == ItemType.ROCK){
+			return new Rock();
+		}
+		
+		if (type == ItemType.BAIT){
+			return new Bait();
 		}
 		
 		if (type == ItemType.CAPTURE_POTION_LARGE){
@@ -93,11 +129,11 @@ public class ItemCollection implements TableModel, Serializable{
 		
 	}
 	
-	/*
-	public void useItem(int i, Trainer trainer){
-		itemList.get(i).useItem(trainer);
+	
+	public Item getItem(int index){
+		return itemList.get(index);
 	}
-	*/
+	
 
 	@Override
 	public void addTableModelListener(TableModelListener arg0) {
