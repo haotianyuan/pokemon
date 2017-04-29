@@ -13,3 +13,4 @@ Mainly take care of the game map implementation and design the interface of the 
 Name: Shanrui Zhang
 Mainly take care of the unit testing and debuging, also the sound track part.Make sure the progrom have no bug on model.
 
+Why no contribution

@@ -46,8 +46,6 @@ public class BattleView extends JPanel implements Observer{
 
 	
 	// declare variables for animation
-	private boolean openingStarted = false;	// flag to check if the openning animation has been played
-	private boolean itemUsingStarted = false;	// flag to check if using item animation started
 	private boolean battleEnd = true;	// flag to show that the battle is end
 	
 	private final static int delayInMillis = 15;
@@ -68,7 +66,7 @@ public class BattleView extends JPanel implements Observer{
 	private int pokemonCurWidth;
 	private int pokemonCurHeight;
 	
-	private ItemType usingItem = null;
+	private ItemType usingItemType = null;
 		
 	
 	// constructor
@@ -86,18 +84,16 @@ public class BattleView extends JPanel implements Observer{
 			
 			// play opening animation
 			if (!openingStarted){
-				openingStarted = true;
 				initData();
 				playOpeningAnimation();
 			}
 			
 			// play use item animation
 			if(arg != null && !itemUsingStarted){
-				// raise the item using flag
-				itemUsingStarted = true;
-				
-				usingItem = (ItemType) arg;
-				System.out.println(usingItem.getClass().getName());
+				// raise the item using flag				
+				usingItemType = (ItemType) arg;
+				playItemAnimation(usingItemType);
+				System.out.println(usingItemType.getClass().getName());
 				// TODO: need item animation
 			}
 			
@@ -106,21 +102,7 @@ public class BattleView extends JPanel implements Observer{
 		}
 		
 	}
-			
-	// return the upper left point of the trainer
-	private Point getTrainerUpperLeft(){
-		Point p = new Point();
-		p.setLocation(trainerMidLocation_X - trainerCurWidth/2, trainerMidLocation_Y - trainerCurHeight);
-		return p;
-	}
-	
-	// return the upper left point of the pokemon
-	private Point getPokemonUpperLeft(){
-		Point p = new Point();
-		p.setLocation(pokemonMidLocation_X - pokemonCurWidth/2, pokemonMidLocation_Y - pokemonCurHeight);
-		return p;
-	}
-		
+					
 	// initiate the data when the battle begin
 	private void initData(){
 		// initiate the data when construct it
@@ -146,7 +128,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	// this will be called in initiation
 	private void resetData(){
-		usingItem = null;	// reset the using item
+		usingItemType = null;	// reset the using item
 		curTurn = 0;	// reset the turn count
 
 		// Date for the opening animation
@@ -164,8 +146,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	public void startBattle(){
 		battleEnd = false;
-		openingStarted = false;
-		
+		openingStarted = false;		
 	}
 	
 	private void endBattle(){
@@ -185,9 +166,13 @@ public class BattleView extends JPanel implements Observer{
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
+			int x = e.getX();
+			int y = e.getY();
+			System.out.println("Click on: " + x + ", " + y);
+			
 			if (!battleEnd){
-				int x = e.getX();
-				int y = e.getY();
+				//int x = e.getX();
+				//int y = e.getY();
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
 						&& y >= 320 - RunButtonHeight - RunButtonHeight_OFFSET && y < 320 - RunButtonHeight_OFFSET){
 					//System.out.println("Click on: " + x + ", " + y);
@@ -231,13 +216,94 @@ public class BattleView extends JPanel implements Observer{
 	 */
 	
 	//////////////////////////// Draw Move In Animation /////////////////////////////
-	private boolean openingEnd = true;	// flag to check if the moving animation is over and enable the listener
+	
 	public boolean InteractEnable(){
-		return openingEnd;
+		return openingEnd && itemUsingEnd;
 	}
+	
+	/******** Opening of the Battle *******/
+	private boolean openingStarted = false;	// flag to check if the openning animation has been played
+	private boolean openingEnd = true;	// flag to check if the moving animation is over and enable the listener
 	private void playOpeningAnimation(){
+		openingStarted = true;
 		openingEnd = false;		
 		startMoveInTimer();
+	}
+	
+	/************* Move In Timer at the opening*************/
+	private Timer moveInTimer;
+	private int moveInCounter;
+	
+	private void startMoveInTimer() {
+		moveInCounter = 0;
+		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
+		moveInTimer.start();
+	}
+	
+	private class moveInTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			//System.out.println(moveInCounter + "");
+			
+			if (moveInCounter < MoveInPixel/PixelPerFrame){
+				moveInCounter++;
+				// set the location of the trainer and the pokemon
+				trainerMidLocation_X -= PixelPerFrame;
+				
+				// pokemon move in later
+				if (moveInCounter < 50){
+					pokemonMidLocation_X += (int)(PixelPerFrame * 1.5);
+				}
+				repaint();
+			}
+			else{
+				openingEnd = true;
+				moveInTimer.stop();
+				moveInCounter = 0;
+			}
+			
+		}
+	}
+	
+	/******** Using an Item and play effect *******/
+	private boolean itemUsingStarted = false;	// flag to check if using item animation started
+	private boolean itemUsingEnd = true;
+	private void playItemAnimation(ItemType type){
+		itemUsingStarted = true;
+		itemUsingEnd = false;
+	}
+	
+	/************* Item Timer *************/
+	private Timer itemTimer;
+	private int itemCounter;
+	
+	private void startItemTimer() {
+		itemCounter = 0;
+		itemTimer = new Timer(delayInMillis, new itemTimerListener());
+		itemTimer.start();
+	}
+	
+	private class itemTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			//System.out.println(moveInCounter + "");
+			
+			if (itemCounter < MoveInPixel/PixelPerFrame){
+				// TODO: algorithm to draw the curve
+
+				repaint();
+			}
+			else{
+				openingEnd = true;
+				moveInTimer.stop();
+				moveInCounter = 0;
+			}
+			
+		}
 	}
 	
 	/////////////////////////// Define sprite sheet name ///////////////////////////
@@ -464,6 +530,20 @@ public class BattleView extends JPanel implements Observer{
 		}
 	}
 	
+	// return the upper left point of the trainer
+	private Point getTrainerUpperLeft(){
+		Point p = new Point();
+		p.setLocation(trainerMidLocation_X - trainerCurWidth/2, trainerMidLocation_Y - trainerCurHeight);
+		return p;
+	}
+	
+	// return the upper left point of the pokemon
+	private Point getPokemonUpperLeft(){
+		Point p = new Point();
+		p.setLocation(pokemonMidLocation_X - pokemonCurWidth/2, pokemonMidLocation_Y - pokemonCurHeight);
+		return p;
+	}
+	
 	
 	////////////////////// Draw Pokemon /////////////////////////////
 	private final static int Pokemon_Height = 126;
@@ -505,45 +585,7 @@ public class BattleView extends JPanel implements Observer{
 				Pokemon_Width, Pokemon_Height);
 	}
 	
-		
-	/********************* Timer **********************/
-	///////////////// Move In Timer //////////////////
-	private Timer moveInTimer;
-	private int moveInCounter;
-	
-	private void startMoveInTimer() {
-		moveInCounter = 0;
-		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
-		moveInTimer.start();
-	}
-	
-	private class moveInTimerListener implements ActionListener {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
 			
-			//System.out.println(moveInCounter + "");
-			
-			if (moveInCounter < MoveInPixel/PixelPerFrame){
-				moveInCounter++;
-				// set the location of the trainer and the pokemon
-				trainerMidLocation_X -= PixelPerFrame;
-				
-				// pokemon move in later
-				if (moveInCounter < 50){
-					pokemonMidLocation_X += (int)(PixelPerFrame * 1.5);
-				}
-				repaint();
-			}
-			else{
-				openingEnd = true;
-				moveInTimer.stop();
-				moveInCounter = 0;
-			}
-			
-		}
-	}
-	
 	// draw the battle
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
@@ -573,6 +615,12 @@ public class BattleView extends JPanel implements Observer{
 			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
 			
 		}
+		// draw the item using animation
+		else if (itemUsingStarted && !itemUsingEnd){
+			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
+			g2.drawImage(drawPokemonA(curPokemon.getSpecy()), getPokemonUpperLeft().x, getPokemonUpperLeft().y, null);
+		}
+		// draw stand-by status
 		else{
 			g2.drawImage(drawTrainer(), getTrainerUpperLeft().x, getTrainerUpperLeft().y, null);
 			g2.drawImage(drawPokemonA(curPokemon.getSpecy()), getPokemonUpperLeft().x, getPokemonUpperLeft().y, null);
