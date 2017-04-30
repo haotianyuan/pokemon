@@ -20,6 +20,12 @@ public class Map_TopRight extends Map{
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	protected void mapIndexReader() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	// TODO: we gonna use them in iterator 2
 	/*
