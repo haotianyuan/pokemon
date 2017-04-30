@@ -24,10 +24,14 @@ public class GameModel extends Observable implements Serializable{
 	private int yPrevCoords;
 		
 	// map information
-	private Map_BottomLeft map_BL;
-	private Map_BottomRight map_BR;
-	private Map_TopLeft map_TL;
-	private Map_TopRight map_TR;
+	private Map_Test map_Test;
+	private Map_00 map_00;
+	private Map_01 map_01;
+	private Map_02 map_02;
+	private Map_10 map_10;
+	private Map_11 map_11;
+	private Map_12 map_12;
+	
 	private Map curMap;
 	
 	// battle information
@@ -46,11 +50,12 @@ public class GameModel extends Observable implements Serializable{
 		wildPokemonGenerator = WildPokemonGenerator.getInstance();
 		encounteredThisBlock = false;
 		curTrainer = new Trainer("T.M.T.");
-		setLocation(65, 65);
-		xPrevCoords = 65;
-		yPrevCoords = 65;
-		setCurMap(map_BL);
+		setLocation(22, 30);
+		xPrevCoords = 22;
+		yPrevCoords = 30;
+		setCurMap(map_00);
 		setMission(new Mission(MissionType.TEST));
+		
 		curTrainer.catchPokemon(new Abra("A_1"));
 		curTrainer.catchPokemon(new Abra("A_2"));
 		curTrainer.catchPokemon(new Abra("A_3"));
@@ -73,22 +78,38 @@ public class GameModel extends Observable implements Serializable{
 		this.curTrainer = trainer;
 	}
 	
+	/*
+	 * *************************************** *
+	 *  	 GameMainPanel Related Below 	   *
+	 * *************************************** *
+	 */
+	
+	/**************** Map Related ***************/
 	public void setCurMap(Map map){
 		this.curMap = map;
 	}
 		
-	public void chooseMap(int i){
-		if (i == 0){
-			curMap = map_BL;
+	public void chooseMap(String tag){
+		if (tag == "00"){
+			curMap = map_00;
 		}
-		else if (i == 1){
-			curMap = map_BR;
+		else if (tag == "01"){
+			curMap = map_01;
 		}
-		else if (i == 2){
-			curMap = map_TL;
+		else if (tag == "02"){
+			curMap = map_02;
+		}
+		else if (tag == "10"){
+			curMap = map_10;
+		}
+		else if (tag == "11"){
+			curMap = map_11;
+		}
+		else if (tag == "12"){
+			curMap = map_12;
 		}
 		else{
-			curMap = map_TR;
+			curMap = map_Test;
 		}
 	}
 	
@@ -100,6 +121,7 @@ public class GameModel extends Observable implements Serializable{
 		this.encounteredThisBlock = b;
 	}
 	
+	/**************** Mission Related ***************/
 	public void setMission(Mission mission){
 		this.mission = mission;
 	}
@@ -113,7 +135,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	// get the location of the trainer
-	public Point getLocation(){
+	public Point getCurLocation(){
 		Point p = new Point();
 		p.setLocation(xCoords, yCoords);
 		return p;
@@ -132,10 +154,13 @@ public class GameModel extends Observable implements Serializable{
 	
 	// initiate the map
 	private void initiateMap(){
-		map_BL = new Map_BottomLeft();
-		map_BR = new Map_BottomRight();
-		map_TL = new Map_TopLeft();
-		map_TR = new Map_TopRight();
+		map_Test = new Map_Test();
+		map_00 = new Map_00();
+		map_01 = new Map_01();
+		map_02 = new Map_02();
+		map_10 = new Map_10();
+		map_11 = new Map_11();
+		map_12 = new Map_12();
 	}	
 		
 	// set the coordinate of the trainer
@@ -149,17 +174,7 @@ public class GameModel extends Observable implements Serializable{
 	private void changeDir(Direction dir){
 		this.curTrainer.setFaceDir(dir);
 	}
-	
-	public void update(){
-		super.setChanged();
-		super.notifyObservers();
-	}
-	
-	public void updateBattleView(Item item){
-		super.setChanged();
-		super.notifyObservers(item);
-	}
-	
+		
 	// move the trainer
 	public void moveTrainer(Direction dir){
 		// change direction first
@@ -201,7 +216,9 @@ public class GameModel extends Observable implements Serializable{
 		if (curMap.getBlock(nextX, nextY).getObstacle() != ObstacleType.NONE){
 			// TODO: notify the user that its not passable
 			// 		Check if it is an item
+			System.out.println("Encounter Obstacle: " + curMap.getBlock(nextX, nextY).getObstacle().name());
 			setLocation(xCoords, yCoords);
+			update();
 		}
 		/*
 		// trigger the portal
@@ -240,6 +257,12 @@ public class GameModel extends Observable implements Serializable{
 		}
 	}
 	
+	/*
+	 * *************************************** *
+	 *  	 BattleViewPanel Related Below 	   *
+	 * *************************************** *
+	 */
+	
 	/************ algorithm to check if the pokemon is caught ************/
 	public boolean checkIfCaughtPokemon(Pokemon p){
 		// calculate the dynamic catch rate
@@ -276,6 +299,11 @@ public class GameModel extends Observable implements Serializable{
 		return chance;
 	}
 		
+	/*
+	 * *************************************** *
+	 *  	 Trigger/Notify Related Below 	   *
+	 * *************************************** *
+	 */
 	public void checkLost(){
 		this.isLost = mission.checkMissionFailed(curTrainer);
 	}
@@ -302,23 +330,18 @@ public class GameModel extends Observable implements Serializable{
 			return false;
 		}
 	}
-	
-	public int getStepCount(){
-		return curTrainer.getStepCount();
-	}
-	
+		
 	public Trainer getTrainer(){
 		return this.curTrainer;
 	}
 	
-	/*
-	// call by the user to use an item
-	public void useItem(int index, Object object){
-		ItemType type = curTrainer.getInventory().getItemType(index);
-		System.out.println(type.getClass());
-		this.curTrainer.useItem(index, object);
-		setChanged();
-		notifyObservers(type);
+	public void update(){
+		super.setChanged();
+		super.notifyObservers();
 	}
-	*/
+	
+	public void updateBattleView(Item item){
+		super.setChanged();
+		super.notifyObservers(item);
+	}
 }

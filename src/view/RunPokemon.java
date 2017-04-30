@@ -57,17 +57,14 @@ public class RunPokemon extends JFrame {
 	
 	// declare the main game view
 	private static MainGameView mainGamePanel;
-	private final static int DefaultGameHeight = 16 * 41;
-	private final static int DefaultGameWidth = 16 * 41;
+	private final static int DefaultGameHeight = 320;
+	private final static int DefaultGameWidth = 480;
 	
 	// declare the battle view
 	private static BattleView battlePanel;
 	private final static int DefaultBattleHeight = 320;
 	private final static int DefaultBattleWidth = 480;
 	
-	// declare timer detail
-	public final static int delayInMillis = 25;
-	public final static int framePerMove = 8;
 	
 	// declare game variable
 	private GameModel gameModel;
@@ -181,7 +178,7 @@ public class RunPokemon extends JFrame {
 	public void setUpGameView(){
 		// set up the main game model
 		mainGamePanel = new MainGameView();
-		mainGamePanel.setSize(DefaultGameHeight, DefaultGameWidth);
+		mainGamePanel.setSize(DefaultGameWidth, DefaultGameHeight);
 		mainGamePanel.setLocation(25, 25);
 		mainGamePanel.setBackground(Color.WHITE);
 		Border gameBorder = new LineBorder(Color.BLACK, 2, true);
@@ -220,7 +217,7 @@ public class RunPokemon extends JFrame {
 	// show the mission board
 	public void setUpMissionBoard(){
 		missionBoard = new JLabel("<html>Mission Statistic:<br>" 
-								+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
+								+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getTrainer().getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
 								+ "&nbsp;&nbsp;&nbsp;Total Pokemon Count: " + gameModel.getTrainer().getPokemonCollection().getSize() + " / " + gameModel.getMission().getTotalRequirement() + "</html>",SwingConstants.LEFT);
 		missionBoard.setBounds(720, 100, 250, 80);
 		missionBoard.setFont(new Font("Times New Roman", Font.BOLD, 18));
@@ -368,7 +365,7 @@ public class RunPokemon extends JFrame {
 	private void updateInfoBoard(){
 		// update infoboard
 		missionBoard.setText("<html>Mission Statistic:<br>" 
-					+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
+					+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getTrainer().getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
 					+ "&nbsp;&nbsp;&nbsp;Total Pokemon Count: " + gameModel.getTrainer().getPokemonCollection().getSize() + " / " + gameModel.getMission().getTotalRequirement() + "</html>");
 		this.requestFocus();
 	}
@@ -385,50 +382,47 @@ public class RunPokemon extends JFrame {
 	}
 
 	/***************************** Movement Control *********************************/
+	// declare timer detail
+	public final static int delayInMillis = 50;
+	public final static int framePerMove = 8;
 		
 	// key board listener
 	private class myKeyListener implements KeyListener {
-		
-		///////// MovementTimer /////////
-		private Timer moveTimer;
-		private int moveCounter = 0;
-		
-		private void startTimer() {
-			moveTimer = new Timer(delayInMillis, new movementTimerListener());
-			moveTimer.start();
-		}
-		
-		private boolean isPressing = false;
-		private boolean isActive = true;	// flag for the continue of the while loop
+							
+		private boolean isActive = false;
+
+		// timer listener for the key listener
+	
 
 		@Override
 		public void keyPressed(KeyEvent key) {
-			isPressing = true;
-			if (isPressing && currentView.getClass() == MainGameView.class){
-				// loop to check if the key was loose or the game is over or the timer stop
-				while (isPressing && !isOver && isActive && currentView.getClass() == MainGameView.class){
-					isActive = false;
-					if (key.getKeyCode() == KeyEvent.VK_UP) {
-						gameModel.moveTrainer(Direction.NORTH);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_DOWN) {
-						gameModel.moveTrainer(Direction.SOUTH);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_LEFT) {
-						gameModel.moveTrainer(Direction.WEST);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_RIGHT) {
-						gameModel.moveTrainer(Direction.EAST);
-					}
-					gameModel.setLocation(gameModel.getLocation().x, gameModel.getLocation().y);
-					
-					// update infoboard
-					updateInfoBoard();
-					// check win/lost
-					checkGameResult();
-					
-					startTimer();
-				}
+			isActive = true;
+			if (!isOver && isActive && currentView.getClass() == MainGameView.class && mainGamePanel.InteractEnable()){
+				// loop to check if the key was loose or the game is over or the timer stop					
+					// after the moving done
+						if (key.getKeyCode() == KeyEvent.VK_UP) {
+							//System.out.println("Move to NORTH");
+							gameModel.moveTrainer(Direction.NORTH);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_DOWN) {
+							//System.out.println("Move to SOUTH");
+							gameModel.moveTrainer(Direction.SOUTH);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_LEFT) {
+							//System.out.println("Move to WEST");
+							gameModel.moveTrainer(Direction.WEST);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_RIGHT) {
+							//System.out.println("Move to EAST");
+							gameModel.moveTrainer(Direction.EAST);
+						}						
+						// update infoboard
+						updateInfoBoard();
+						// check win/lost
+						checkGameResult();	
+			}
+			else{
+				isActive = false;
 			}
 
 
@@ -436,7 +430,7 @@ public class RunPokemon extends JFrame {
 
 		@Override
 		public void keyReleased(KeyEvent key) {
-			isPressing = false;
+			isActive = false;
 		}
 
 		@Override
@@ -444,28 +438,7 @@ public class RunPokemon extends JFrame {
 			// TODO Auto-generated method stub
 			
 		}		
-		
-		// timer listener for the key listener
-		private class movementTimerListener implements ActionListener {
 
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (moveCounter < framePerMove ){
-					moveCounter++;
-				}
-				else{
-					moveTimer.stop();
-					isActive = true;
-					moveCounter = 0;
-					
-					// check if encounter pokemon
-					if (gameModel.getTrainer().getCurEncounterPokemon() != null){
-						isPressing = false;
-						mainGamePanel.setVisible(false);
-					}
-				}
-			}
-		}
 	}
 	
 		

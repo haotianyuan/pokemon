@@ -2,12 +2,14 @@ package Map;
 
 import java.awt.Point;
 
-public class Map_BottomLeft extends Map{
+public class Map_Test extends Map{
 	
+	public Map_Test() {
+		super(129, 129);
+		// TODO Auto-generated constructor stub
+	}
+
 	private static final long serialVersionUID = 350193831245730397L;
-	
-	private Point topPortal;
-	private Point rightPortal;
 
 	@Override
 	public void mapGenerator() {
@@ -61,24 +63,6 @@ public class Map_BottomLeft extends Map{
 		}
 		
 	}
-	// TODO: we gonna use them in iterator 2
-	/*
-	public Point getTopPortal(){
-		return this.topPortal;
-	}
-	
-	public Point getRightPortal(){
-		return this.rightPortal;
-	}
-	
-	public void setTopPortal(Point p){
-		this.topPortal.setLocation(p);;
-	}
-	
-	public void setRightPortal(Point p){
-		this.rightPortal.setLocation(p);;
-	}
-	*/
 
 	@Override
 	public Map changeMap(Point portal) {
@@ -87,9 +71,9 @@ public class Map_BottomLeft extends Map{
 	}
 
 	@Override
-	protected void mapIndexReader() {
+	public String getMapName() {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 }

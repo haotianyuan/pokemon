@@ -2,7 +2,10 @@ package Map;
 
 import java.awt.Point;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 public abstract class Map implements Serializable{
 
@@ -11,39 +14,60 @@ public abstract class Map implements Serializable{
 	
 	private int[][] mapIndex;	// store the indexed map
 	private MapBlock[][] map;	// store the map as grid
-	private final static int MapSize = 129;
-	protected final static int MapIndexSize_X = 40;
-	protected final static int MapIndexSize_Y = 40;
+	private final static int MapSize_Test = 129;
+	protected final int MapSize_X;
+	protected final int MapSize_Y;
 	
-	public Map(){
+	public Map(int height, int width){
+		MapSize_X = width + 2;
+		MapSize_Y = height + 2;
 		initMap();
 		mapGenerator();
 	}
 	
-	private void initMap(){
-		mapIndex = new int[MapSize][MapSize];
-		map = new MapBlock[MapSize][MapSize];
+	private void initMap(){		
+		mapIndex = new int[MapSize_X][MapSize_Y];
+		map = new MapBlock[MapSize_X][MapSize_Y];
 		
-		for (int i = 0; i < MapSize; i ++){
-			for (int j = 0; j < MapSize; j ++){
+		// initiate the map block and index block
+		for (int i = 0; i < MapSize_X; i ++){
+			for (int j = 0; j < MapSize_Y; j ++){
 				map[i][j] = new MapBlock(GroundType.GRASSLAND);
+				mapIndex[i][j] = 0;
+				// set the tag for border
+				if (i == 0 || j == 0){
+					map[i][j].setObstacle(ObstacleType.BORDER);
+					mapIndex[i][j] = 99;
+				}
 			}
 		}
 		
-		for (int i = 0; i < MapSize; i ++){
-			for (int j = 0; j < MapSize; j ++){
+		/*
+		for (int i = 0; i < MapSize_X - 2; i ++){
+			for (int j = 0; j < MapSize_Y - 2; j ++){
 				mapIndex[i][j] = 0;
 			}
 		}
+		*/
+
+		
 	}
 	
 	protected String getFolderPath(){
 		return MapFolderPath;
 	}
 	
+	public int getMapSize_X(){
+		return MapSize_X;
+	}
+	
+	public int getMapSize_Y(){
+		return MapSize_Y;
+	}
+	
 	// getter and setter
 	public int getSize(){
-		return this.MapSize;
+		return this.MapSize_Test;
 	}
 	
 	
@@ -64,14 +88,25 @@ public abstract class Map implements Serializable{
 	
 	// TODO: GENERATE MAP
 	protected abstract void mapGenerator();
-	protected abstract void mapIndexReader();
+	
+	public abstract String getMapName();
 	
 	public abstract Map changeMap(Point portal);
 	
+	/*
+	public double getVisionRadiusVertical(){
+		return 5;
+	}
+	
+	public double getVisionRadiusHorizontal(){
+		return 7.5;
+	}
+	*/
+	
 	
 	public void printMapInSymbol(){
-		for (int i = 0; i < 129; i ++){
-			for (int j = 0; j < 129; j++){
+		for (int i = 0; i < MapSize_X; i ++){
+			for (int j = 0; j < MapSize_Y; j++){
 				if (map[j][i].getObstacle() == ObstacleType.ROCK){
 					System.out.print("R ");
 				}
@@ -93,9 +128,46 @@ public abstract class Map implements Serializable{
 				else if (map[j][i].getGround() == GroundType.SOIL){
 					System.out.print("D ");
 				}
+				else if (map[j][i].getObstacle() == ObstacleType.BORDER){
+					System.out.print("B ");
+				}
 			}
 			System.out.println("");
 		}
+	}
+	
+	protected void mapIndexReader(String mapFileName) {
+		// read in the map file
+		String filePath = getFolderPath() + mapFileName;
+		try {
+			Scanner inFile = new Scanner(new File(filePath));
+			// initate the list
+			ArrayList<String> lines = new ArrayList<String>();
+			
+			// loop to read in lines
+			while(inFile.hasNextLine()){
+				lines.add(inFile.nextLine());
+			}
+			
+			inFile.close();
+			
+			// split lines into array
+			int x = 0;	// index for loop
+			for (String line: lines){
+				int y = 0;	// index for loop
+				String[] strArr = line.split("\\s+");
+				for (String str: strArr){
+					setIndexBlock(y + 1, x + 1, Integer.parseInt(str));
+					y++;
+				}
+				x++;
+			}
+		} 
+		// exception
+		catch (FileNotFoundException e) {
+			System.out.println("Cannot find file" + filePath);
+			e.printStackTrace();
+		}		
 	}
 
 }

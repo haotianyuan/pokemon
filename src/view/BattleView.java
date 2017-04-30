@@ -244,7 +244,7 @@ public class BattleView extends JPanel implements Observer{
 	private static final String hpBarFileName = "pokemon_hpbar.png";
 	private static final String battleFieldFileName = "pokemon_battle_field.png";
 	private static final String itemTextureFileName = "pokemon_item.png";
-	
+	private static final String menuFrameFileName = "pokemon_menu_frame.png";
  		
 	/********************** Load Image **********************/
 	private final void loadImages(){
@@ -445,19 +445,19 @@ public class BattleView extends JPanel implements Observer{
 	/********************** Draw Trainer **********************/
 	private final static int Trainer_Height = 98;
 	
-	private final static int Trainer_Steady_Width = 76;
+	private final static int Trainer_Steady_Width = 75;
 	private final static int Trainer_Throw01_Width = 128;
 	private final static int Trainer_Throw02_Width = 106;
-	private final static int Trainer_Throw03_Width = 131;
+	private final static int Trainer_Throw03_Width = 130;
 	private final static int Trainer_Throw04_Width = 112;
 	
 	private final static int Trainer_OFFSET_Y = 365;
 	
-	private final static int Trainer_Steady_OFFSET_X = 51;
-	private final static int Trainer_Throw01_OFFSET_X = 143;
-	private final static int Trainer_Throw02_OFFSET_X = 271;
-	private final static int Trainer_Throw03_OFFSET_X = 398;
-	private final static int Trainer_Throw04_OFFSET_X = 529;
+	private final static int Trainer_Steady_OFFSET_X = 44;
+	private final static int Trainer_Throw01_OFFSET_X = 134;
+	private final static int Trainer_Throw02_OFFSET_X = 263;
+	private final static int Trainer_Throw03_OFFSET_X = 390;
+	private final static int Trainer_Throw04_OFFSET_X = 521;
 	
 	private BufferedImage drawTrainer(){
 		// set the corresponding height
