@@ -16,7 +16,7 @@ public class MapBlock implements Serializable{
 
 	private static final long serialVersionUID = -4085092152859549598L;
 	
-	private final GroundType groundType;
+	private GroundType groundType;
 	private ObstacleType obstacleType;
 	private InteractType interactType;
 	//private final boolean passable;
@@ -39,6 +39,56 @@ public class MapBlock implements Serializable{
 	
 	public InteractType getInteractType(){
 		return this.interactType;
+	}
+	
+	protected void setBlockFromIndex(int i){
+		switch (i){
+			case 0:
+				setObstacle(ObstacleType.DECORATION);
+				break;
+			
+			case 1:
+				setInteract(InteractType.SHORTGRASS);
+				break;
+				
+			case 2:
+				setObstacle(ObstacleType.WATER);
+				break;
+				
+			case 3:
+				setObstacle(ObstacleType.ROCK);
+				break;
+				
+			case 4:
+				setInteract(InteractType.SWAMP);
+				break;
+				
+			case 5:
+				setGround(GroundType.SOIL);
+				setInteract(InteractType.SAND);
+				break;
+				
+			case 6:
+				setInteract(InteractType.PORTAL);
+				break;
+				
+			case 7:
+				setObstacle(ObstacleType.TREE);
+				break;
+			
+			case 8:
+				setGround(GroundType.ROAD);
+				break;
+				
+			default:
+				setGround(GroundType.GRASSLAND);
+				break;				
+		}
+		
+	}
+	
+	public void setGround(GroundType gnd){
+		this.groundType = gnd;
 	}
 	
 	public void setObstacle(ObstacleType ob){

@@ -23,10 +23,10 @@ public class TrainerTest {
 		assertTrue(trn.getStepCount() == 0);
 		trn.incrementBonusCapture(1.0);
 		trn.decrementBonusCapture(1.0);
-		trn.incrementBonusRun(1.0);
-		trn.decrementBonusRun(1.0);
+		trn.incrementReducedRun(1.0);
+		trn.decrementReducedRun(1.0);
 		assertTrue(trn.getBonusCapture() == 0);
-		assertTrue(trn.getBonusRun() == 0);
+		assertTrue(trn.getReducedRun() == 0);
 		trn.setLocation(1, 2);
 		assertTrue(trn.getRow() == 2);
 		assertTrue(trn.getCol() == 1);

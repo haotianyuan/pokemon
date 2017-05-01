@@ -8,8 +8,11 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,6 +21,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,22 +57,27 @@ public class RunPokemon extends JFrame {
 	private JLabel missionBoard;
 	private JTable inventoryTable;
 	private JTable pokemonTable;
+	
 	private JButton useItemButton;
-	private JPanel currentView;
+	private JButton trainerInfoButton;
+	private JButton bagInfoButton;
+	private JButton pokedexButton;
+	
 	
 	// declare the main game view
+	private JPanel currentView;
+	
+	private final static int View_OFFSET_X = 25; 
+	private final static int View_OFFSET_Y = 25; 
 	private static MainGameView mainGamePanel;
-	private final static int DefaultGameHeight = 16 * 41;
-	private final static int DefaultGameWidth = 16 * 41;
+	private final static int DefaultGameHeight = 320;
+	private final static int DefaultGameWidth = 480;
 	
 	// declare the battle view
 	private static BattleView battlePanel;
 	private final static int DefaultBattleHeight = 320;
 	private final static int DefaultBattleWidth = 480;
 	
-	// declare timer detail
-	public final static int delayInMillis = 25;
-	public final static int framePerMove = 8;
 	
 	// declare game variable
 	private GameModel gameModel;
@@ -125,9 +135,17 @@ public class RunPokemon extends JFrame {
 		initiatePokemonGame();
 		//timer = new Timer(delayInMillis, new MoveListener());
 		//timer.start();
+		// check if encounter a pokemon
+		// start the battle
+		if (gameModel.getTrainer().getCurEncounterPokemon() != null){
+			mainGamePanel.playTransitionAnimation();
+			while (!mainGamePanel.InteractEnable());
+			mainGamePanel.setVisible(false);
+		}
 	}
 		
 	private void initiatePokemonGame(){
+				loadImage();
 				setUpMainWindow();
 				setUpBattleView();
 				setUpGameView();		
@@ -136,7 +154,8 @@ public class RunPokemon extends JFrame {
 				setUpMissionBoard();
 				setUpInventory();
 				setUpPokemonTable();
-				setUpUseItemButton();
+				setUpButtons();
+
 				addObservers();
 				setViewTo(mainGamePanel);	// default starting view
 	}
@@ -158,6 +177,8 @@ public class RunPokemon extends JFrame {
 		// TODO: mission
 	}
 	
+	/********************* Add Component Into Pane ***********************/
+	
 	public void setUpMainWindow(){
 		// define the location of the main window
 		this.setTitle("Pokemon Safari Zone - Alpha v0.5");
@@ -176,8 +197,8 @@ public class RunPokemon extends JFrame {
 	public void setUpGameView(){
 		// set up the main game model
 		mainGamePanel = new MainGameView();
-		mainGamePanel.setSize(DefaultGameHeight, DefaultGameWidth);
-		mainGamePanel.setLocation(25, 25);
+		mainGamePanel.setSize(DefaultGameWidth, DefaultGameHeight);
+		mainGamePanel.setLocation(View_OFFSET_X, View_OFFSET_Y);
 		mainGamePanel.setBackground(Color.WHITE);
 		Border gameBorder = new LineBorder(Color.BLACK, 2, true);
 		mainGamePanel.setBorder(gameBorder);
@@ -190,7 +211,7 @@ public class RunPokemon extends JFrame {
 		// set up the main game model
 		battlePanel = new BattleView();
 		battlePanel.setSize(DefaultBattleWidth, DefaultBattleHeight);
-		battlePanel.setLocation(25, 25);
+		battlePanel.setLocation(View_OFFSET_X, View_OFFSET_Y);
 		battlePanel.setBackground(Color.WHITE);
 		Border gameBorder = new LineBorder(Color.BLACK, 2, true);
 		battlePanel.setBorder(gameBorder);
@@ -203,6 +224,8 @@ public class RunPokemon extends JFrame {
 		this.addKeyListener(new myKeyListener());
 		// add the window listener
 		this.addWindowListener(new windowsOnExit());
+		// add regainfocus listener
+		this.addMouseListener(new gainFocusClickListener());
 	}
 	
 	public void setUpInfoBoard(){
@@ -215,7 +238,7 @@ public class RunPokemon extends JFrame {
 	// show the mission board
 	public void setUpMissionBoard(){
 		missionBoard = new JLabel("<html>Mission Statistic:<br>" 
-								+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
+								+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getTrainer().getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
 								+ "&nbsp;&nbsp;&nbsp;Total Pokemon Count: " + gameModel.getTrainer().getPokemonCollection().getSize() + " / " + gameModel.getMission().getTotalRequirement() + "</html>",SwingConstants.LEFT);
 		missionBoard.setBounds(720, 100, 250, 80);
 		missionBoard.setFont(new Font("Times New Roman", Font.BOLD, 18));
@@ -240,6 +263,14 @@ public class RunPokemon extends JFrame {
 		getContentPane().add(pane);
 	}
 	
+	//////////////////// Add Buttons ////////////////////
+	public void setUpButtons(){
+		setUpUseItemButton();
+		setUpTrainerInfoButton();
+		setUpBagInfoButton();
+		setUpPokedexButton();
+	}
+	
 	// add use item button
 	public void setUpUseItemButton(){
 		useItemButton = new JButton("Use Item");
@@ -249,6 +280,47 @@ public class RunPokemon extends JFrame {
 		useItemButton.addActionListener(new useItemButtonListener());
 	}
 	
+	// add user info button
+	public void setUpTrainerInfoButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getTrainerInfoIcon());
+		trainerInfoButton = new JButton(icon);
+		trainerInfoButton.setBounds(25, 420, Trainer_Info_Width, Trainer_Info_Height);
+		trainerInfoButton.setOpaque(false);
+		trainerInfoButton.setContentAreaFilled(false);
+		
+		trainerInfoButton.setBorderPainted(false);
+		trainerInfoButton.setFocusPainted(false);
+		getContentPane().add(trainerInfoButton);
+	}
+		
+	// add user info button
+	public void setUpBagInfoButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getBagInfoIcon());
+		bagInfoButton = new JButton(icon);
+		bagInfoButton.setBounds(150, 420, Bag_Info_Width, Bag_Info_Height);
+		bagInfoButton.setOpaque(false);
+		bagInfoButton.setContentAreaFilled(false);
+		
+		bagInfoButton.setBorderPainted(false);
+		bagInfoButton.setFocusPainted(false);
+		getContentPane().add(bagInfoButton);
+	}
+	
+	// add pokemon info button
+	public void setUpPokedexButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getPokedexIcon());
+		pokedexButton = new JButton(icon);
+		pokedexButton.setBounds(290, 432, Pokedex_Width, Pokedex_Height);
+		pokedexButton.setOpaque(false);
+		pokedexButton.setContentAreaFilled(false);
+		
+		pokedexButton.setBorderPainted(false);
+		pokedexButton.setFocusPainted(false);
+		getContentPane().add(pokedexButton);
+	}
 	
 	// show the inventory table
 	public void setUpPokemonTable(){
@@ -309,6 +381,9 @@ public class RunPokemon extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			if (!battlePanel.InteractEnable()){
+				return;
+			}
 			String text = ((JButton) e.getSource()).getText();
 			if (text.equals("Use Item") && currentView.getClass() == MainGameView.class){
 				// check if there is any row selected
@@ -319,7 +394,7 @@ public class RunPokemon extends JFrame {
 				// interact with the selected row
 				int index = inventoryTable.convertRowIndexToModel(inventoryTable.getSelectedRow());
 				
-				gameModel.getTrainer().useItem(index, gameModel.getTrainer());
+				gameModel.getTrainer().useItem(index, gameModel.getTrainer());					
 				
 				// update the information table
 				updateInfoBoard();
@@ -336,20 +411,16 @@ public class RunPokemon extends JFrame {
 				}
 				// interact with the selected row
 				int index = inventoryTable.convertRowIndexToModel(inventoryTable.getSelectedRow());
-				//System.out.println("Using Item at row: " + index);
 				
 				// use the item
-				if (gameModel.getTrainer().getCurEncounterPokemon() != null ){
-					ItemType type = gameModel.getTrainer().getInventory().getItemType(index);
-					
-					//System.out.println(gameModel.getTrainer().getCurEncounterPokemon().getClass());
-					
-					gameModel.getTrainer().useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
-					gameModel.updateBattleView(type);
-					//System.out.println(gameModel.getTrainer().getCurEncounterPokemon().getClass());
-					//gameModel.useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
+				if (gameModel.getTrainer().getCurEncounterPokemon() != null ){					
+					// notify the battle view if successfully use the item
+					if (gameModel.getTrainer().checkItemUsable(index, gameModel.getTrainer().getCurEncounterPokemon())){
+						// use the item
+						gameModel.updateBattleView(gameModel.getTrainer().getInventory().getItem(index));
+						gameModel.getTrainer().useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
+					}
 				}
-				//System.out.println("Upadating Table");
 				// update the information table
 				updateInfoBoard();
 				
@@ -364,7 +435,7 @@ public class RunPokemon extends JFrame {
 	private void updateInfoBoard(){
 		// update infoboard
 		missionBoard.setText("<html>Mission Statistic:<br>" 
-					+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
+					+ "&nbsp;&nbsp;&nbsp;Step Count: " + gameModel.getTrainer().getStepCount() + " / " + gameModel.getMission().getStepCap() + "<br>"
 					+ "&nbsp;&nbsp;&nbsp;Total Pokemon Count: " + gameModel.getTrainer().getPokemonCollection().getSize() + " / " + gameModel.getMission().getTotalRequirement() + "</html>");
 		this.requestFocus();
 	}
@@ -381,50 +452,47 @@ public class RunPokemon extends JFrame {
 	}
 
 	/***************************** Movement Control *********************************/
+	// declare timer detail
+	public final static int delayInMillis = 50;
+	public final static int framePerMove = 8;
 		
 	// key board listener
 	private class myKeyListener implements KeyListener {
-		
-		///////// MovementTimer /////////
-		private Timer moveTimer;
-		private int moveCounter = 0;
-		
-		private void startTimer() {
-			moveTimer = new Timer(delayInMillis, new movementTimerListener());
-			moveTimer.start();
-		}
-		
-		private boolean isPressing = false;
-		private boolean isActive = true;	// flag for the continue of the while loop
+							
+		private boolean isActive = false;
+
+		// timer listener for the key listener
+	
 
 		@Override
 		public void keyPressed(KeyEvent key) {
-			isPressing = true;
-			if (isPressing && currentView.getClass() == MainGameView.class){
-				// loop to check if the key was loose or the game is over or the timer stop
-				while (isPressing && !isOver && isActive && currentView.getClass() == MainGameView.class){
-					isActive = false;
-					if (key.getKeyCode() == KeyEvent.VK_UP) {
-						gameModel.moveTrainer(Direction.NORTH);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_DOWN) {
-						gameModel.moveTrainer(Direction.SOUTH);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_LEFT) {
-						gameModel.moveTrainer(Direction.WEST);
-					}
-					if (key.getKeyCode() == KeyEvent.VK_RIGHT) {
-						gameModel.moveTrainer(Direction.EAST);
-					}
-					gameModel.setLocation(gameModel.getLocation().x, gameModel.getLocation().y);
-					
-					// update infoboard
-					updateInfoBoard();
-					// check win/lost
-					checkGameResult();
-					
-					startTimer();
-				}
+			isActive = true;
+			if (!isOver && isActive && currentView.getClass() == MainGameView.class && mainGamePanel.InteractEnable()){
+				// loop to check if the key was loose or the game is over or the timer stop					
+					// after the moving done
+						if (key.getKeyCode() == KeyEvent.VK_UP) {
+							//System.out.println("Move to NORTH");
+							gameModel.moveTrainer(Direction.NORTH);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_DOWN) {
+							//System.out.println("Move to SOUTH");
+							gameModel.moveTrainer(Direction.SOUTH);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_LEFT) {
+							//System.out.println("Move to WEST");
+							gameModel.moveTrainer(Direction.WEST);
+						}
+						if (key.getKeyCode() == KeyEvent.VK_RIGHT) {
+							//System.out.println("Move to EAST");
+							gameModel.moveTrainer(Direction.EAST);
+						}						
+						// update infoboard
+						updateInfoBoard();
+						// check win/lost
+						checkGameResult();	
+			}
+			else{
+				isActive = false;
 			}
 
 
@@ -432,7 +500,7 @@ public class RunPokemon extends JFrame {
 
 		@Override
 		public void keyReleased(KeyEvent key) {
-			isPressing = false;
+			isActive = false;
 		}
 
 		@Override
@@ -440,28 +508,7 @@ public class RunPokemon extends JFrame {
 			// TODO Auto-generated method stub
 			
 		}		
-		
-		// timer listener for the key listener
-		private class movementTimerListener implements ActionListener {
 
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				if (moveCounter < framePerMove ){
-					moveCounter++;
-				}
-				else{
-					moveTimer.stop();
-					isActive = true;
-					moveCounter = 0;
-					
-					// check if encounter pokemon
-					if (gameModel.getTrainer().getCurEncounterPokemon() != null){
-						isPressing = false;
-						mainGamePanel.setVisible(false);
-					}
-				}
-			}
-		}
 	}
 	
 		
@@ -490,8 +537,11 @@ public class RunPokemon extends JFrame {
 					System.exit(0);
 				}
 				// if the user choose no, exit the program
-				else {
+				else if(userPrompt == JOptionPane.NO_OPTION) {
 					System.exit(0);
+				}
+				else{
+					return;
 				}
 			}
 		}
@@ -545,6 +595,8 @@ public class RunPokemon extends JFrame {
 				setViewTo(mainGamePanel);
 			}
 			else if (e.getComponent().getClass() == MainGameView.class){
+				// save the game before going into battle
+				saveData();
 				battlePanel.startBattle();
 				setViewTo(battlePanel);
 			}
@@ -571,5 +623,148 @@ public class RunPokemon extends JFrame {
 		}
 		
 	}
+	
+	// regain focus when click on the game view
+	private class gainFocusClickListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			int x = e.getX();
+			int y = e.getY();
+			if (x >= 25 && x <= 25 + DefaultGameWidth && y >= 25 && y <= 25 + DefaultGameHeight){
+				System.out.println("Click on: " + x + ", " + y);
+				requestFocus();
+			}
+			
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+	
+	/*
+	 * *************************************** *
+	 *  		Painting Creator Below         *
+	 * *************************************** *
+	 */
+	
+	/******************* Define Sprite Sheet ********************/
+	private BufferedImage trainerSheet;
+	private BufferedImage bagSheet;
+	private BufferedImage pokedexSheet;
+	
+	private final static String TextureFolderPath = "images" + File.separator + "Texture" + File.separator;
+	private static final String TrainerTextureFileName = "pokemon_trainer.png";
+	private static final String BagTextureFileName = "pokemon_bag_window.png";
+	private static final String PokedexTextureFileName = "pokedex.png";
+	
+	
+	
+	private void loadImage(){
+		loadTrainerTexture();
+		loadBagTexture();
+		loadPokedexTexture();
+	}
+	
+	private void loadTrainerTexture() {
+		String filePath = TextureFolderPath + TrainerTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File trainerTextureFile = new File(filePath);
+			trainerSheet = ImageIO.read(trainerTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private void loadBagTexture() {
+		String filePath = TextureFolderPath + BagTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File bagTextureFile = new File(filePath);
+			bagSheet = ImageIO.read(bagTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private void loadPokedexTexture() {
+		String filePath = TextureFolderPath + PokedexTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File pokdexTextureFile = new File(filePath);
+			pokedexSheet = ImageIO.read(pokdexTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	
+	/******************* Draw Trainer Info Icon ********************/
+	
+	private static final int Trainer_Info_OFFSET_X = 1015;
+	private static final int Trainer_Info_OFFSET_Y = 272;
+	private static final int Trainer_Info_Width = 71;
+	private static final int Trainer_Info_Height = 163;
+	
+	private BufferedImage getTrainerInfoIcon(){
+		return trainerSheet.getSubimage(Trainer_Info_OFFSET_X , Trainer_Info_OFFSET_Y,
+				Trainer_Info_Width, Trainer_Info_Height);
+	}
+	
+	
+	/******************* Draw Bag Info Icon ********************/
+	
+	private static final int Bag_Info_OFFSET_X = 660;
+	private static final int Bag_Info_OFFSET_Y = 5;
+	private static final int Bag_Info_Width = 122;
+	private static final int Bag_Info_Height = 163;
+	
+	private BufferedImage getBagInfoIcon(){
+		return bagSheet.getSubimage(Bag_Info_OFFSET_X , Bag_Info_OFFSET_Y,
+				Bag_Info_Width, Bag_Info_Height);
+	}
+	
+	
+	/******************* Draw Pokedex Info Icon ********************/
+	
+	private static final int Pokedex_OFFSET_X = 0;
+	private static final int Pokedex_OFFSET_Y = 0;
+	private static final int Pokedex_Width = 250;
+	private static final int Pokedex_Height = 151;
+	
+	private BufferedImage getPokedexIcon(){
+		return pokedexSheet.getSubimage(Pokedex_OFFSET_X , Pokedex_OFFSET_Y,
+				Pokedex_Width, Pokedex_Height);
+	}	
 	
 }

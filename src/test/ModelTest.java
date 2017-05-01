@@ -21,14 +21,9 @@ public class ModelTest {
 		Trainer newTrn = new Trainer("lulu");
 		model.setTrainer(newTrn);
 		assertTrue(model.getTrainer().getID().equals("lulu"));
-		Map_BottomLeft newMap = new Map_BottomLeft();
+		Map_Test newMap = new Map_Test();
 		model.setCurMap(newMap);
 		assertTrue(model.getCurMap() == newMap);
-		model.chooseMap(0);
-		model.chooseMap(1);
-		model.chooseMap(2);
-		model.chooseMap(3);
-		model.chooseMap(0);
 		
 		Mission newMission = new Mission(MissionType.TWENTYPOKEMON);
 		
@@ -37,7 +32,7 @@ public class ModelTest {
 		assertTrue(model.getDir() == model.getTrainer().getFaceDir());
 		Point tempPoint = new Point();
 		tempPoint.setLocation(65, 65);
-		assertTrue(model.getLocation().equals(tempPoint));
+		assertTrue(model.getCurLocation().equals(tempPoint));
 		assertTrue(model.getPrevLocation().equals(tempPoint));
 		tempPoint.setLocation(0, 0);
 		model.update();
@@ -60,7 +55,6 @@ public class ModelTest {
 		assertTrue(model.isLost());
 		assertTrue(!model.isWin());
 		assertTrue(model.isOver());
-		assertTrue(model.getStepCount() != 0);
 		assertTrue(model.getCurMap().getBlock(0, 0).getGround() == GroundType.SOIL);
 		assertTrue(model.getCurMap().getBlock(0, 0).getInteractType() == InteractType.NONE);
 		assertFalse(model.getCurMap().getBlock(0, 0).isPassable());
