@@ -10,7 +10,7 @@ public enum InteractType {
 	private final double basicEncounterRate;	// rate that user encounter pokemon upon these interact type
 	
 	private InteractType(double encounterRate){
-		basicEncounterRate = encounterRate * 0.01;
+		basicEncounterRate = encounterRate * 0.04;
 	}
 	
 	public double getBasicEncounterRate(){

@@ -138,6 +138,8 @@ public class RunPokemon extends JFrame {
 		// check if encounter a pokemon
 		// start the battle
 		if (gameModel.getTrainer().getCurEncounterPokemon() != null){
+			mainGamePanel.playTransitionAnimation();
+			while (!mainGamePanel.InteractEnable());
 			mainGamePanel.setVisible(false);
 		}
 	}

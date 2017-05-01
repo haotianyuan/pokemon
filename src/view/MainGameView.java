@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -7,7 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Observable;
@@ -26,21 +29,13 @@ import Map.ObstacleType;
 public class MainGameView extends JPanel implements Observer{
 
 	private static final long serialVersionUID = 7713222421276164624L;
-
-	// declare image sheet
-	private BufferedImage trainerSheet;
-	private BufferedImage map_00;
-	private BufferedImage map_01;
-	private BufferedImage map_02;
-	private BufferedImage map_10;
-	private BufferedImage map_11;
-	private BufferedImage map_12;
 		
 	// declare drawing coords
 	private static Point onScreenTrainerMid = new Point();
 	private static Point onMapTrainerMid = new Point();
 	private static Point onMapCenterOfView = new Point();
 	private GameModel gameModel;
+	private boolean needToChangeView = false;
 	
 	private int curX;
 	private int curY;
@@ -52,12 +47,13 @@ public class MainGameView extends JPanel implements Observer{
 	
 	// constructor
 	public MainGameView(){
+		setLayout(null);
 		loadImages();
 		repaint();
 	}
 	
 	public boolean InteractEnable(){
-		return endMoving;
+		return endMoving && transEnd;
 	}
 		
 	// draw the map
@@ -86,6 +82,61 @@ public class MainGameView extends JPanel implements Observer{
 		
 		//System.out.println("After Move:   CurX: " + curX + ", CurY: " + curY);
 		//printTrack();
+		// draw transition ball
+		if (transStarted && !transEnd){
+			// draw black rectange
+			if (transMoveCounter > 1 && transMoveCounter < 32){
+				g2.setColor(Color.BLACK);
+				
+				//int startX = 0;
+				//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
+				
+				g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				
+				//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
+				
+				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			}
+			else if (transMoveCounter >= 32){
+				g2.setColor(Color.BLACK);
+				g2.fillRect(0, 0, 480, 80);
+				
+				g2.fillRect(0, 80, 480, 80);
+				
+				g2.fillRect(0, 160, 480, 80);
+				
+				g2.fillRect(0, 240, 480, 80);
+			}
+			// draw ball
+			if (transMoveCounter < 5){
+				g2.drawImage(drawTransitionBall_01(), 0, 0, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+			}
+			else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
+				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
+				g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
+			}
+			else{				
+				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+			}
+			
+		}
+			
 		
 			
 	}
@@ -197,7 +248,7 @@ public class MainGameView extends JPanel implements Observer{
 	
 
 	
-	/***************************** Timer *************************************/
+	/***************************** Movement Timer *************************************/
 	private Timer moveTimer;
 	private int trainerMoveCounter;
 	public final static int FramePerMove = 16;
@@ -287,7 +338,7 @@ public class MainGameView extends JPanel implements Observer{
 				
 				repaint();
 				
-				printTrack();
+				//printTrack();
 				
 				
 				//System.out.println("Final On Map Trainer Location: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
@@ -299,13 +350,59 @@ public class MainGameView extends JPanel implements Observer{
 				}
 				// check if encounter pokemon
 				if (gameModel.getTrainer().getCurEncounterPokemon() != null){
-					setVisible(false);
+					playTransitionAnimation();
 				}
 			}
 		}
 
 		
 	}
+	
+	
+	
+	/***************************** Transition Timer *************************************/
+	private Timer transTimer;
+	private int transMoveCounter = 0;
+	public final static int FramePerTrans = 35;
+	private static final double PixelPerTransFrame = 16;
+	private boolean transStarted = false;
+	private boolean transEnd = true;
+	//private double transRotationRadian = 0;
+	
+	private void startTransTimer() {
+		transTimer = new Timer(delayInMillis, new transTimerListener());
+		transStarted = true;
+		transEnd = false;
+		transTimer.start();
+		
+	}
+	
+	public void playTransitionAnimation() {		
+		//System.out.println("start transition timer");
+		startTransTimer();
+	}
+	
+	private class transTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			if (transMoveCounter < FramePerTrans){
+				repaint();
+				transMoveCounter++;
+				//System.out.println("counter: " + transMoveCounter);
+			}
+			else{
+				transTimer.stop();
+				transMoveCounter = 0;
+				transStarted = false;
+				transEnd = true;
+				if (gameModel.getTrainer().getCurEncounterPokemon() != null){
+					setVisible(false);
+					return;
+				}
+			}
+		}
+	}	
 	
 	
 	@Override
@@ -315,7 +412,7 @@ public class MainGameView extends JPanel implements Observer{
 		// if the user did not move, dont play the moving animation
 		if (InteractEnable() && !gameModel.getPrevLocation().equals(gameModel.getCurLocation())){
 			
-			System.out.println("call the drawing function");
+			//System.out.println("call the drawing function");
 			
 			drawTrainerWithAnimation();
 		}
@@ -328,7 +425,8 @@ public class MainGameView extends JPanel implements Observer{
 			getOnMapCenterOfView();
 		}
 		repaint();
-		printTrack();
+		
+		//printTrack();
 	}
 	
 	private void printTrack(){
@@ -346,11 +444,23 @@ public class MainGameView extends JPanel implements Observer{
 	 */
 	
 	/**************** Define the Sprite Sheet ****************/
+	
+	// declare image sheet
+	private static BufferedImage trainerSheet;
+	private static BufferedImage transSheet;
+	private static BufferedImage map_00;
+	private static BufferedImage map_01;
+	private static BufferedImage map_02;
+	private static BufferedImage map_10;
+	private static BufferedImage map_11;
+	private static BufferedImage map_12;
+	
 	private static final String TextureFolderPath = "images"+ File.separator + "Texture" + File.separator;
 	private static final String MapFolderPath = "images"+ File.separator + "Map" + File.separator;
 	
 	// define sprite sheet name
-	private static final String trainerTextureFileName = "pokemon_trainer.png";
+	private static final String TrainerTextureFileName = "pokemon_trainer.png";
+	private static final String TransitionTextureFileName = "TransitionBall" + File.separator + "pokeball_transition_00.png";
 	
 	private static final String MapTextureFileName_00 = "SAFARI ZONE_260.png";
 	private static final String MapTextureFileName_01 = "SAFARI ZONE_261.png";
@@ -364,7 +474,20 @@ public class MainGameView extends JPanel implements Observer{
 		
 	// function to load images sheet
 	private void loadImages() {		
-		String filePath = TextureFolderPath + trainerTextureFileName;
+		loadTrainerTexture();
+		loadTransitionImage();
+		// load maps
+		loadMap_00();
+		loadMap_01();
+		loadMap_02();
+		loadMap_10();
+		loadMap_11();
+		loadMap_12();
+		
+	}
+	
+	private void loadTrainerTexture(){
+		String filePath = TextureFolderPath + TrainerTextureFileName;
 		
 		// try to open the file of the trainer
 		try{
@@ -374,15 +497,20 @@ public class MainGameView extends JPanel implements Observer{
 		catch (IOException e){
 			System.out.println("Could not find: " + filePath);
 		}
+	}
+	
+	private void loadTransitionImage(){
+		String filePath = TextureFolderPath + TransitionTextureFileName;
 		
-		// load maps
-		loadMap_00();
-		loadMap_01();
-		loadMap_02();
-		loadMap_10();
-		loadMap_11();
-		loadMap_12();
-		
+		// try to open the file of the trainer
+		try{
+			File transitionTextureFile = new File(filePath);
+			transSheet = ImageIO.read(transitionTextureFile);
+			TransBallImage = transSheet.getSubimage(TransBall_OFFSET_X, TransBall_OFFSET_Y, TransBall_Width, TransBall_Height);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
 	}
 	
 	private void loadMap_00(){
@@ -628,4 +756,83 @@ public class MainGameView extends JPanel implements Observer{
 			return null;
 		}
 	}
+	
+	
+	/**************** Draw Transition ****************/
+	private static final int TransBall_Height = 80;
+	private static final int TransBall_Width = 80;
+	private static final int TransBall_OFFSET_X = 0;
+	private static final int TransBall_OFFSET_Y = 0;
+	
+	private static BufferedImage TransBallImage;
+	
+	private BufferedImage drawTransitionBall_01(){
+		// get the subimage of the ball
+		if (transMoveCounter > (FramePerTrans - 2)){
+			return null;
+		}
+		
+		int startX = 0;
+		int startY = 0;
+		int width = TransBall_Width;
+		int height = TransBall_Height;
+		
+		if (transMoveCounter < 5 ){
+			startX = (int) (TransBall_Width - (transMoveCounter + 1) * PixelPerTransFrame);
+			startY = 0;
+			width = (int) ((transMoveCounter + 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		else if ( transMoveCounter > FramePerTrans - 6){
+			startX = 0;
+			startY = 0;
+			width = (int) ((FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		
+		//System.out.println("Ball 1:");
+		//System.out.println("	" + transMoveCounter + ": " + startX + ", " + startY + ", " + width + ", " + height);
+		
+		return TransBallImage.getSubimage(startX, startY, width, height);
+	}
+	
+	private BufferedImage drawTransitionBall_02(){
+		// get the subimage of the ball
+		if (transMoveCounter > (FramePerTrans - 2)){
+			return null;
+		}
+		
+		int startX = 0;
+		int startY = 0;
+		int width = TransBall_Width;
+		int height = TransBall_Height;
+		
+		if (transMoveCounter < 5 ){
+			startX = 0;
+			startY = 0;
+			width = (int) ((transMoveCounter + 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		else if ( transMoveCounter > FramePerTrans - 6){
+			startX = (int) (TransBall_Width - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			startY = 0;
+			width = (int) ((FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		
+		//System.out.println("Ball 2:");
+		//System.out.println("	" + transMoveCounter + ": " + startX + ", " + startY + ", " + width + ", " + height);
+		
+		return TransBallImage.getSubimage(startX, startY, width, height);
+	}
+	
+	/*
+	private BufferedImage drawTransitionBall_03(){
+		return transSheet.getSubimage(TransBall_OFFSET_X, TransBall_OFFSET_Y, TransBall_Width, TransBall_Height);
+	}
+	
+	private BufferedImage drawTransitionBall_04(){
+		return transSheet.getSubimage(Trans_BallOFFSET_X, TransBall_OFFSET_Y, TransBall_Width, TransBall_Height);
+	}
+	*/
 }

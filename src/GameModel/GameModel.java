@@ -50,9 +50,9 @@ public class GameModel extends Observable implements Serializable{
 		wildPokemonGenerator = WildPokemonGenerator.getInstance();
 		encounteredThisBlock = false;
 		curTrainer = new Trainer("T.M.T.");
-		setLocation(22, 30);
+		setLocation(22, 31);
 		xPrevCoords = 22;
-		yPrevCoords = 30;
+		yPrevCoords = 31;
 		setCurMap(map_01);
 		setMission(new Mission(MissionType.TEST));
 		

@@ -1,5 +1,7 @@
 package view;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -29,23 +31,14 @@ import Pokemon.Pokemon;
 public class BattleView extends JPanel implements Observer{
 	
 	private static final long serialVersionUID = 784618488834701873L;
-	
-	// declare image sheet
-	private BufferedImage pokemonSheet;
-	private BufferedImage battleField;
-	private BufferedImage effectSheet;
-	private BufferedImage menuSheet;
-	private BufferedImage barSheet;
-	private BufferedImage trainerSheet;
-	private BufferedImage itemSheet;
-	
+		
 	// game model
-	private GameModel model;
+	private GameModel gameModel;
 	private int curTurn;
 	
 	// combat pokemon information
 	private Pokemon curPokemon;	// current encountering pokemon
-	private JLabel battleInfo;
+	private JLabel battleInfoBoard;
 
 	
 	// declare variables for animation
@@ -89,8 +82,10 @@ public class BattleView extends JPanel implements Observer{
 	
 	// constructor
 	public BattleView(){
+		setLayout(null);
 		loadImages();
 		initData();
+		initBattleInfoBoard();
 		repaint();
 		this.addMouseListener(new ClickListener());
 	}
@@ -99,7 +94,7 @@ public class BattleView extends JPanel implements Observer{
 	@Override
 	public void update(Observable o, Object arg) {
 		if (battleEnd == false){
-			model = (GameModel) o;
+			gameModel = (GameModel) o;
 			
 			// play opening animation
 			if (!openingStarted){
@@ -123,17 +118,15 @@ public class BattleView extends JPanel implements Observer{
 	// initiate the data when the battle begin
 	private void initData(){
 		// initiate the data when construct it
-		if (model == null){
+		if (gameModel == null){
 			curPokemon = null;
 			return;
 		}
 		
-		
-		
 		resetData();
 		
 		// get the encountered pokemon
-		setCurPokemon(model.getTrainer().getCurEncounterPokemon());
+		setCurPokemon(gameModel.getTrainer().getCurEncounterPokemon());
 	}
 	
 	// this will be called in initiation
@@ -155,6 +148,14 @@ public class BattleView extends JPanel implements Observer{
 		itemUpperLeft = new Point();
 	}
 	
+	// initate Jlabel
+	private void initBattleInfoBoard(){
+		battleInfoBoard = new JLabel();
+		battleInfoBoard.setBounds(20, 241, 380, 59);
+		battleInfoBoard.setFont(new Font("Times New Roman", Font.BOLD, 16));
+		add(battleInfoBoard);
+	}
+	
 	/**************** Tool ****************/
 	public void setCurPokemon(Pokemon pokemon){
 		this.curPokemon = pokemon;
@@ -168,14 +169,14 @@ public class BattleView extends JPanel implements Observer{
 	private void endBattle(){
 		battleEnd = true;
 		curPokemon = null;
-		model.getTrainer().setCurEncounterPokemon(null);
-		model.setEncounteredThisBlock(false);
+		gameModel.getTrainer().setCurEncounterPokemon(null);
+		gameModel.setEncounteredThisBlock(false);
 		generalTimer.stop();
 		generalCounter = 0;
 	}
 	
 	public boolean InteractEnable(){
-		return openingEnd && itemUsingEnd && itemFlyEnd && itemEffectEnd;
+		return openingEnd && itemUsingEnd && itemFlyEnd && itemEffectEnd && transEnd;
 	}
 	
 	
@@ -200,34 +201,25 @@ public class BattleView extends JPanel implements Observer{
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
 						&& y >= 320 - RunButtonHeight - RunButtonHeight_OFFSET && y < 320 - RunButtonHeight_OFFSET){
 					System.out.println("Click on: " + x + ", " + y);
-					endBattle();
-					setVisible(false);
+					playTransitionAnimation();
 				}
 			}			
 		}
 
 		@Override
 		public void mouseEntered(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
-		public void mouseExited(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+		public void mouseExited(MouseEvent arg0) {			
 		}
 
 		@Override
-		public void mousePressed(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+		public void mousePressed(MouseEvent arg0) {			
 		}
 
 		@Override
-		public void mouseReleased(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+		public void mouseReleased(MouseEvent arg0) {			
 		}
 		
 	}
@@ -241,6 +233,18 @@ public class BattleView extends JPanel implements Observer{
 	
 		
 	/**************** Define sprite sheet name ****************/
+	
+	// declare image sheet
+	private BufferedImage pokemonSheet;
+	private BufferedImage battleField;
+	private BufferedImage effectSheet;
+	private BufferedImage menuSheet;
+	private BufferedImage barSheet;
+	private BufferedImage trainerSheet;
+	private BufferedImage itemSheet;
+	private static BufferedImage transSheet;
+	
+	private static final String TextureFolderPath = "images"+ File.separator + "Texture" + File.separator;
 	private static final String pokemonTextureFileName = "pokemon_pokemons.png";
 	private static final String trainerTextureFileName = "pokemon_trainer.png";
 	private static final String effectTextureFileName = "pokemon_effect.png";
@@ -249,9 +253,11 @@ public class BattleView extends JPanel implements Observer{
 	private static final String battleFieldFileName = "pokemon_battle_field.png";
 	private static final String itemTextureFileName = "pokemon_item.png";
 	private static final String menuFrameFileName = "pokemon_menu_frame.png";
+	private static final String TransitionTextureFileName = "TransitionBall" + File.separator + "pokeball_transition_00.png";
  		
 	/********************** Load Image **********************/
 	private final void loadImages(){
+		loadTransitionImage();
 		loadPokemonTexture();
 		loadTrainerTexture();
 		loadEffectTexture();
@@ -354,6 +360,21 @@ public class BattleView extends JPanel implements Observer{
 			System.out.println("Could not find: " + itemTextureFileName);
 		}	
 	}
+	
+	private void loadTransitionImage(){
+		String filePath = TextureFolderPath + TransitionTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File transitionTextureFile = new File(filePath);
+			transSheet = ImageIO.read(transitionTextureFile);
+			TransBallImage = transSheet.getSubimage(TransBall_OFFSET_X, TransBall_OFFSET_Y, TransBall_Width, TransBall_Height);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
 
 
 	// define the upper left point for all pokemon on the sheet
@@ -752,6 +773,15 @@ public class BattleView extends JPanel implements Observer{
 	private final static int Effect_Punch_Light_OFFSET_X = 962;
 	private final static int Effect_Punch_Light_OFFSET_Y = 500;
 	
+	private BufferedImage drawEffect_Punch_Heavy(){
+		return effectSheet.getSubimage(Effect_Punch_Heavy_OFFSET_X, Effect_Punch_Heavy_OFFSET_Y, Effect_Punch_Heavy_Height, Effect_Punch_Heavy_Width);
+	}
+	
+	private BufferedImage drawEffect_Punch_Light(){
+		return effectSheet.getSubimage(Effect_Punch_Light_OFFSET_X, Effect_Punch_Light_OFFSET_Y, Effect_Punch_Light_Height, Effect_Punch_Light_Width);
+	}
+	
+	
 	
 	/******************* Draw Move In Animation ******************/
 	
@@ -772,6 +802,7 @@ public class BattleView extends JPanel implements Observer{
 		moveInCounter = 0;
 		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
 		moveInTimer.start();
+		battleInfoBoard.setText("A WILD " + gameModel.getTrainer().getCurEncounterPokemon().getName());
 	}
 	
 	private class moveInTimerListener implements ActionListener {
@@ -891,7 +922,8 @@ public class BattleView extends JPanel implements Observer{
 				itemFlyTimer.stop();
 				itemFlyCounter = 0;
 				
-				// check the item use result
+				// play item effect animation
+				playItemEffectAnimation();
 				
 			}
 			
@@ -901,6 +933,7 @@ public class BattleView extends JPanel implements Observer{
 	/******************* Draw Item Effect Animation ******************/
 	private boolean itemEffectStarted = false;	// flag to check if using item animation started
 	private boolean itemEffectEnd = true;
+	
 	private void playItemEffectAnimation(){
 		itemEffectStarted = true;
 		itemEffectEnd = false;
@@ -922,11 +955,10 @@ public class BattleView extends JPanel implements Observer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			
-			// play flying track and play effect
+			// play effect
 			if (itemEffectCounter < 10){
-				//System.out.println(itemEffectCounter + "");
 				repaint();
-				itemFlyCounter ++;
+				itemEffectCounter ++;
 			}
 			else{
 				itemEffectEnd = true;
@@ -934,12 +966,129 @@ public class BattleView extends JPanel implements Observer{
 				itemEffectTimer.stop();
 				itemEffectCounter = 0;
 				
-				// check the item use result
+				// TODO: check the item use result
 				
 			}
 			
 		}
 	}
+	
+	
+	/***************************** Transition Timer *************************************/
+	private final static int VisionRadius_X = 240;	// define the vision of the trainer on the map
+	private final static int VisionRadius_Y = 160;	// define the vision of the trainer on the map
+	private Timer transTimer;
+	private int transMoveCounter = 0;
+	public final static int FramePerTrans = 35;
+	private static final double PixelPerTransFrame = 16;
+	private boolean transStarted = false;
+	private boolean transEnd = true;
+	//private double transRotationRadian = 0;
+	
+	private void startTransTimer() {
+		transTimer = new Timer(delayInMillis * 2, new transTimerListener());
+		transStarted = true;
+		transEnd = false;
+		transTimer.start();
+		
+	}
+	
+	public void playTransitionAnimation() {		
+		System.out.println("start transition timer");
+		startTransTimer();
+	}
+	
+	private class transTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			if (transMoveCounter < FramePerTrans){
+				repaint();
+				transMoveCounter++;
+				//System.out.println("counter: " + transMoveCounter);
+			}
+			else{
+				transTimer.stop();
+				transMoveCounter = 0;
+				transStarted = false;
+				transEnd = true;
+				endBattle();
+				if (gameModel.getTrainer().getCurEncounterPokemon() == null){
+					setVisible(false);
+					return;
+				}
+			}
+		}
+	}	
+	
+	/**************** Draw Transition ****************/
+	private static final int TransBall_Height = 80;
+	private static final int TransBall_Width = 80;
+	private static final int TransBall_OFFSET_X = 0;
+	private static final int TransBall_OFFSET_Y = 0;
+	
+	private static BufferedImage TransBallImage;
+	
+	private BufferedImage drawTransitionBall_01(){
+		// get the subimage of the ball
+		if (transMoveCounter > (FramePerTrans - 2)){
+			return null;
+		}
+		
+		int startX = 0;
+		int startY = 0;
+		int width = TransBall_Width;
+		int height = TransBall_Height;
+		
+		if (transMoveCounter < 5 ){
+			startX = (int) (TransBall_Width - (transMoveCounter + 1) * PixelPerTransFrame);
+			startY = 0;
+			width = (int) ((transMoveCounter + 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		else if ( transMoveCounter > FramePerTrans - 6){
+			startX = 0;
+			startY = 0;
+			width = (int) ((FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		
+		//System.out.println("Ball 1:");
+		//System.out.println("	" + transMoveCounter + ": " + startX + ", " + startY + ", " + width + ", " + height);
+		
+		return TransBallImage.getSubimage(startX, startY, width, height);
+	}
+	
+	private BufferedImage drawTransitionBall_02(){
+		// get the subimage of the ball
+		if (transMoveCounter > (FramePerTrans - 2)){
+			return null;
+		}
+		
+		int startX = 0;
+		int startY = 0;
+		int width = TransBall_Width;
+		int height = TransBall_Height;
+		
+		if (transMoveCounter < 5 ){
+			startX = 0;
+			startY = 0;
+			width = (int) ((transMoveCounter + 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		else if ( transMoveCounter > FramePerTrans - 6){
+			startX = (int) (TransBall_Width - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			startY = 0;
+			width = (int) ((FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame);
+			height = TransBall_Height;
+		}
+		
+		//System.out.println("Ball 2:");
+		//System.out.println("	" + transMoveCounter + ": " + startX + ", " + startY + ", " + width + ", " + height);
+		
+		return TransBallImage.getSubimage(startX, startY, width, height);
+	}
+	
 	
 	
 	/**************** Overall Timer *****************/
@@ -972,6 +1121,8 @@ public class BattleView extends JPanel implements Observer{
 	
 	}
 	
+	
+	
 			
 	/**************** Paint function ****************/
 	public void paintComponent(Graphics g){
@@ -980,7 +1131,7 @@ public class BattleView extends JPanel implements Observer{
 		Graphics2D g2 = (Graphics2D) g;
 		
 		// check the existence of model
-		if (model == null){
+		if (gameModel == null){
 			return;
 		}
 		
@@ -1006,6 +1157,61 @@ public class BattleView extends JPanel implements Observer{
 			System.out.println("Item Mid Location: " + itemUpperLeft.x + ", " + itemUpperLeft.y);
 		}
 		//g2.drawImage(drawItemFly(usingItemType), itemUpperLeft.x, itemUpperLeft.y, null);
+		
+		
+		if (transStarted && !transEnd){
+			// draw black rectange
+			if (transMoveCounter > 1 && transMoveCounter < 32){
+				g2.setColor(Color.BLACK);
+				//int startX = 0;
+				//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
+				
+				g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				
+				//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+				//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
+				
+				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+				
+				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			}
+			else if (transMoveCounter >= 32){
+				g2.setColor(Color.BLACK);
+				g2.fillRect(0, 0, 480, 80);
+				
+				g2.fillRect(0, 80, 480, 80);
+				
+				g2.fillRect(0, 160, 480, 80);
+				
+				g2.fillRect(0, 240, 480, 80);
+			}
+			// draw ball
+			if (transMoveCounter < 5){
+				g2.drawImage(drawTransitionBall_01(), 0, 0, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+			}
+			else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
+				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
+				g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
+			}
+			else{				
+				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
+				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+			}
+			
+		}
+		
 	}
 
 }
