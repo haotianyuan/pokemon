@@ -8,8 +8,11 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,6 +21,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,10 +57,18 @@ public class RunPokemon extends JFrame {
 	private JLabel missionBoard;
 	private JTable inventoryTable;
 	private JTable pokemonTable;
+	
 	private JButton useItemButton;
-	private JPanel currentView;
+	private JButton trainerInfoButton;
+	private JButton bagInfoButton;
+	private JButton pokedexButton;
+	
 	
 	// declare the main game view
+	private JPanel currentView;
+	
+	private final static int View_OFFSET_X = 25; 
+	private final static int View_OFFSET_Y = 25; 
 	private static MainGameView mainGamePanel;
 	private final static int DefaultGameHeight = 320;
 	private final static int DefaultGameWidth = 480;
@@ -130,6 +143,7 @@ public class RunPokemon extends JFrame {
 	}
 		
 	private void initiatePokemonGame(){
+				loadImage();
 				setUpMainWindow();
 				setUpBattleView();
 				setUpGameView();		
@@ -138,7 +152,8 @@ public class RunPokemon extends JFrame {
 				setUpMissionBoard();
 				setUpInventory();
 				setUpPokemonTable();
-				setUpUseItemButton();
+				setUpButtons();
+
 				addObservers();
 				setViewTo(mainGamePanel);	// default starting view
 	}
@@ -160,6 +175,8 @@ public class RunPokemon extends JFrame {
 		// TODO: mission
 	}
 	
+	/********************* Add Component Into Pane ***********************/
+	
 	public void setUpMainWindow(){
 		// define the location of the main window
 		this.setTitle("Pokemon Safari Zone - Alpha v0.5");
@@ -179,7 +196,7 @@ public class RunPokemon extends JFrame {
 		// set up the main game model
 		mainGamePanel = new MainGameView();
 		mainGamePanel.setSize(DefaultGameWidth, DefaultGameHeight);
-		mainGamePanel.setLocation(25, 25);
+		mainGamePanel.setLocation(View_OFFSET_X, View_OFFSET_Y);
 		mainGamePanel.setBackground(Color.WHITE);
 		Border gameBorder = new LineBorder(Color.BLACK, 2, true);
 		mainGamePanel.setBorder(gameBorder);
@@ -192,7 +209,7 @@ public class RunPokemon extends JFrame {
 		// set up the main game model
 		battlePanel = new BattleView();
 		battlePanel.setSize(DefaultBattleWidth, DefaultBattleHeight);
-		battlePanel.setLocation(25, 25);
+		battlePanel.setLocation(View_OFFSET_X, View_OFFSET_Y);
 		battlePanel.setBackground(Color.WHITE);
 		Border gameBorder = new LineBorder(Color.BLACK, 2, true);
 		battlePanel.setBorder(gameBorder);
@@ -205,6 +222,8 @@ public class RunPokemon extends JFrame {
 		this.addKeyListener(new myKeyListener());
 		// add the window listener
 		this.addWindowListener(new windowsOnExit());
+		// add regainfocus listener
+		this.addMouseListener(new gainFocusClickListener());
 	}
 	
 	public void setUpInfoBoard(){
@@ -242,6 +261,14 @@ public class RunPokemon extends JFrame {
 		getContentPane().add(pane);
 	}
 	
+	//////////////////// Add Buttons ////////////////////
+	public void setUpButtons(){
+		setUpUseItemButton();
+		setUpTrainerInfoButton();
+		setUpBagInfoButton();
+		setUpPokedexButton();
+	}
+	
 	// add use item button
 	public void setUpUseItemButton(){
 		useItemButton = new JButton("Use Item");
@@ -251,6 +278,47 @@ public class RunPokemon extends JFrame {
 		useItemButton.addActionListener(new useItemButtonListener());
 	}
 	
+	// add user info button
+	public void setUpTrainerInfoButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getTrainerInfoIcon());
+		trainerInfoButton = new JButton(icon);
+		trainerInfoButton.setBounds(25, 420, Trainer_Info_Width, Trainer_Info_Height);
+		trainerInfoButton.setOpaque(false);
+		trainerInfoButton.setContentAreaFilled(false);
+		
+		trainerInfoButton.setBorderPainted(false);
+		trainerInfoButton.setFocusPainted(false);
+		getContentPane().add(trainerInfoButton);
+	}
+		
+	// add user info button
+	public void setUpBagInfoButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getBagInfoIcon());
+		bagInfoButton = new JButton(icon);
+		bagInfoButton.setBounds(150, 420, Bag_Info_Width, Bag_Info_Height);
+		bagInfoButton.setOpaque(false);
+		bagInfoButton.setContentAreaFilled(false);
+		
+		bagInfoButton.setBorderPainted(false);
+		bagInfoButton.setFocusPainted(false);
+		getContentPane().add(bagInfoButton);
+	}
+	
+	// add pokemon info button
+	public void setUpPokedexButton(){
+		// get the info icon image
+		ImageIcon icon = new ImageIcon(getPokedexIcon());
+		pokedexButton = new JButton(icon);
+		pokedexButton.setBounds(290, 432, Pokedex_Width, Pokedex_Height);
+		pokedexButton.setOpaque(false);
+		pokedexButton.setContentAreaFilled(false);
+		
+		pokedexButton.setBorderPainted(false);
+		pokedexButton.setFocusPainted(false);
+		getContentPane().add(pokedexButton);
+	}
 	
 	// show the inventory table
 	public void setUpPokemonTable(){
@@ -553,5 +621,148 @@ public class RunPokemon extends JFrame {
 		}
 		
 	}
+	
+	// regain focus when click on the game view
+	private class gainFocusClickListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			int x = e.getX();
+			int y = e.getY();
+			if (x >= 25 && x <= 25 + DefaultGameWidth && y >= 25 && y <= 25 + DefaultGameHeight){
+				System.out.println("Click on: " + x + ", " + y);
+				requestFocus();
+			}
+			
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+	
+	
+	/*
+	 * *************************************** *
+	 *  		Painting Creator Below         *
+	 * *************************************** *
+	 */
+	
+	/******************* Define Sprite Sheet ********************/
+	private BufferedImage trainerSheet;
+	private BufferedImage bagSheet;
+	private BufferedImage pokedexSheet;
+	
+	private final static String TextureFolderPath = "images" + File.separator + "Texture" + File.separator;
+	private static final String TrainerTextureFileName = "pokemon_trainer.png";
+	private static final String BagTextureFileName = "pokemon_bag_window.png";
+	private static final String PokedexTextureFileName = "pokedex.png";
+	
+	
+	
+	private void loadImage(){
+		loadTrainerTexture();
+		loadBagTexture();
+		loadPokedexTexture();
+	}
+	
+	private void loadTrainerTexture() {
+		String filePath = TextureFolderPath + TrainerTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File trainerTextureFile = new File(filePath);
+			trainerSheet = ImageIO.read(trainerTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private void loadBagTexture() {
+		String filePath = TextureFolderPath + BagTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File bagTextureFile = new File(filePath);
+			bagSheet = ImageIO.read(bagTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private void loadPokedexTexture() {
+		String filePath = TextureFolderPath + PokedexTextureFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File pokdexTextureFile = new File(filePath);
+			pokedexSheet = ImageIO.read(pokdexTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	
+	/******************* Draw Trainer Info Icon ********************/
+	
+	private static final int Trainer_Info_OFFSET_X = 1015;
+	private static final int Trainer_Info_OFFSET_Y = 272;
+	private static final int Trainer_Info_Width = 71;
+	private static final int Trainer_Info_Height = 163;
+	
+	private BufferedImage getTrainerInfoIcon(){
+		return trainerSheet.getSubimage(Trainer_Info_OFFSET_X , Trainer_Info_OFFSET_Y,
+				Trainer_Info_Width, Trainer_Info_Height);
+	}
+	
+	
+	/******************* Draw Bag Info Icon ********************/
+	
+	private static final int Bag_Info_OFFSET_X = 660;
+	private static final int Bag_Info_OFFSET_Y = 5;
+	private static final int Bag_Info_Width = 122;
+	private static final int Bag_Info_Height = 163;
+	
+	private BufferedImage getBagInfoIcon(){
+		return bagSheet.getSubimage(Bag_Info_OFFSET_X , Bag_Info_OFFSET_Y,
+				Bag_Info_Width, Bag_Info_Height);
+	}
+	
+	
+	/******************* Draw Pokedex Info Icon ********************/
+	
+	private static final int Pokedex_OFFSET_X = 0;
+	private static final int Pokedex_OFFSET_Y = 0;
+	private static final int Pokedex_Width = 250;
+	private static final int Pokedex_Height = 151;
+	
+	private BufferedImage getPokedexIcon(){
+		return pokedexSheet.getSubimage(Pokedex_OFFSET_X , Pokedex_OFFSET_Y,
+				Pokedex_Width, Pokedex_Height);
+	}	
 	
 }

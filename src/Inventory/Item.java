@@ -28,6 +28,7 @@ public abstract class Item implements Serializable{
 	
 	public abstract boolean useItem(Object object);
 	public abstract boolean checkItemUsable(Object object);
+	public abstract String getUsageMessage();
 		
 	public abstract String getInfo();
 	

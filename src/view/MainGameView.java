@@ -72,22 +72,21 @@ public class MainGameView extends JPanel implements Observer{
 		}
 		
 		// Check if play moving animation
-		if (!startMoving && endMoving && !gameModel.getCurLocation().equals(gameModel.getPrevLocation())){
+		if ((!startMoving && endMoving && !gameModel.getCurLocation().equals(gameModel.getPrevLocation())) || gameModel.onPortal()){
 			// calculate the position of the trainer during moving time
-			getOnScreenTrainerMid();
 			getOnMapTrainerMid();
+			getOnScreenTrainerMid();
 			getOnMapCenterOfView();
-		}
-		System.out.println("CurX: " + curX + ", CurY: " + curY);
-		System.out.println("Current Coords of Trainer On Map: " + gameModel.getCurLocation().x + ", " + gameModel.getCurLocation().y );
-		System.out.println("Current Center of Trainer On Screen: " + onScreenTrainerMid.x + ", " + onScreenTrainerMid.y);
-		System.out.println("Current Center of Trainer On Map: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
-		System.out.println("Current Center of View On Map: " + onMapCenterOfView.x + ", " + onMapCenterOfView.y);
-		
+		}		
+				
 		// draw view
 		g2.drawImage(drawMapView(), 0, 0, null);
 		// draw trainer
 		g2.drawImage(drawTrainer(), onScreenTrainerMid.x - Trainer_Width/2, onScreenTrainerMid.y - Trainer_Height + 10, null);
+		
+		//System.out.println("After Move:   CurX: " + curX + ", CurY: " + curY);
+		//printTrack();
+		
 			
 	}
 	/**************** Calculator for Location ****************/
@@ -103,20 +102,20 @@ public class MainGameView extends JPanel implements Observer{
 		double viewCenterOnMapY = onMapTrainerMid.y;
 		
 		// check if the vision cover the corner/sides
-		
 		// collide left side or right side
-		if (curX < 8){
+		if (viewCenterOnMapX <= 272 ){
 			viewCenterOnMapX = 8.5 * MapBlockSize;
 		}
-		else if (curX > 32){
-			viewCenterOnMapX = 32.5 * MapBlockSize;
+		else if (viewCenterOnMapX >= 1072){
+			viewCenterOnMapX = 33.5 * MapBlockSize;
 		}
+		
 		// collide top or bottom
-		if (curY < 6){
-			viewCenterOnMapY = 5 * MapBlockSize;
+		if (viewCenterOnMapY <= 208 ){
+			viewCenterOnMapY = 6.5 * MapBlockSize;
 		}
-		else if (curY > 35){
-			viewCenterOnMapY = 35 * MapBlockSize;
+		else if (viewCenterOnMapY >= 1152){
+			viewCenterOnMapY = 36 * MapBlockSize;
 		}
 		
 		p.setLocation((int) viewCenterOnMapX, (int) viewCenterOnMapY);
@@ -126,7 +125,9 @@ public class MainGameView extends JPanel implements Observer{
 	
 	private Point getOnMapTrainerMid(){
 		if (startMoving && !endMoving){
-			return null;
+			if (onMapTrainerMid.y >= 1152){
+				trainerMove_Vertical = true;
+			}
 		}
 		Point p = new Point();
 		
@@ -140,6 +141,19 @@ public class MainGameView extends JPanel implements Observer{
 	
 	private Point getOnScreenTrainerMid(){
 		if (startMoving && !endMoving){
+			if (onMapTrainerMid.y >= 1152 || onMapTrainerMid.y <= 208){
+				trainerMove_Vertical = true;
+			}
+			else{
+				trainerMove_Vertical = false;
+			}
+			
+			if (onMapTrainerMid.x <= 272 || onMapTrainerMid.x >= 1072){
+				trainerMove_Horizontal = true;
+			}
+			else{
+				trainerMove_Horizontal = false;
+			}
 			return null;
 		}
 		
@@ -156,22 +170,20 @@ public class MainGameView extends JPanel implements Observer{
 			trainerMidOnScreenX = (curX - 0.5) * MapBlockSize;
 			trainerMove_Horizontal = true;
 		}
-		else if (curX > 32){
-			trainerMidOnScreenX = 2 * VisionRadius_X - (gameModel.getCurMap().getMapSize_X() - curX - 2.5) * MapBlockSize;
-			trainerMove_Horizontal = true;
+		else if (curX > 33){
+			trainerMidOnScreenX = 2 * VisionRadius_X - (gameModel.getCurMap().getMapSize_X() - curX - 1.5) * MapBlockSize;
 		}
 		else{
 			trainerMove_Horizontal = false;
 		}
 		
 		// collide top or bottom
-		if (curY < 6){
-			trainerMidOnScreenY = (curY - 0.5) * MapBlockSize;
-			trainerMove_Vertical = true;
+		if (curY <= 6){
+			trainerMidOnScreenY = (curY - 1) * MapBlockSize;
 		}
-		else if (curY > 35){
-			trainerMidOnScreenY = 2 * VisionRadius_Y - (gameModel.getCurMap().getMapSize_Y() - curY - 0.5) * MapBlockSize;
-			trainerMove_Vertical = true;
+		else if (onMapTrainerMid.y >= 1152){
+			System.out.println("mark here");
+			trainerMidOnScreenY = 2 * VisionRadius_Y - (gameModel.getCurMap().getMapSize_Y() - curY - 1.5) * MapBlockSize;
 		}
 		else{
 			trainerMove_Vertical = false;
@@ -206,18 +218,9 @@ public class MainGameView extends JPanel implements Observer{
 		curX = gameModel.getPrevLocation().x;
 		curY = gameModel.getPrevLocation().y;
 		
-		getOnScreenTrainerMid();
 		getOnMapTrainerMid();
+		getOnScreenTrainerMid();
 		getOnMapCenterOfView();
-
-
-		/*
-		System.out.println("CurX: " + curX + ", CurY: " + curY);
-		System.out.println("Current Coords of Trainer On Map: " + gameModel.getCurLocation().x + ", " + gameModel.getCurLocation().y );
-		System.out.println("Current Center of Trainer On Screen: " + onScreenTrainerMid.x + ", " + onScreenTrainerMid.y);
-		System.out.println("Current Center of Trainer On Map: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
-		System.out.println("Current Center of View On Map: " + onMapCenterOfView.x + ", " + onMapCenterOfView.y);
-		*/
 		
 		startMoveTimer();
 	}
@@ -247,6 +250,7 @@ public class MainGameView extends JPanel implements Observer{
 				
 				// update current location 
 				// Check direction
+				getOnScreenTrainerMid();
 				if (gameModel.getDir() == Direction.EAST && trainerMove_Horizontal == true){
 					onScreenTrainerMid.setLocation(onScreenTrainerMid.x + PixelPerFrame, onScreenTrainerMid.y);
 				}
@@ -260,13 +264,9 @@ public class MainGameView extends JPanel implements Observer{
 					onScreenTrainerMid.setLocation(onScreenTrainerMid.x, onScreenTrainerMid.y - PixelPerFrame);
 				}	
 				
-				/*
-				System.out.println("CurX: " + curX + ", CurY: " + curY);
-				System.out.println("Current Coords of Trainer On Map: " + gameModel.getCurLocation().x + ", " + gameModel.getCurLocation().y );
-				System.out.println("Current Center of Trainer On Screen: " + onScreenTrainerMid.x + ", " + onScreenTrainerMid.y);
-				System.out.println("Current Center of Trainer On Map: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
-				System.out.println("Current Center of View On Map: " + onMapCenterOfView.x + ", " + onMapCenterOfView.y);
-				*/
+				//System.out.println("Counter: " + trainerMoveCounter);
+				//printTrack();
+				
 				getOnMapCenterOfView();
 				trainerMoveCounter++;
 				repaint();
@@ -281,12 +281,13 @@ public class MainGameView extends JPanel implements Observer{
 				curX = gameModel.getCurLocation().x;
 				curY = gameModel.getCurLocation().y;
 				
-
-				getOnScreenTrainerMid();
 				getOnMapTrainerMid();
+				getOnScreenTrainerMid();
 				getOnMapCenterOfView();
 				
 				repaint();
+				
+				printTrack();
 				
 				
 				//System.out.println("Final On Map Trainer Location: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
@@ -310,16 +311,7 @@ public class MainGameView extends JPanel implements Observer{
 	@Override
 	public void update(Observable o, Object arg) {
 		gameModel = (GameModel) o;
-		
-
-		/*
-		System.out.println("get notification");
-		System.out.println("Current Coords of Trainer On Map: " + gameModel.getCurLocation().x + ", " + gameModel.getCurLocation().y );
-		System.out.println("Current Center of Trainer On Screen: " + onScreenTrainerMid.x + ", " + onScreenTrainerMid.y);
-		System.out.println("Current Center of Trainer On Map: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
-		System.out.println("Current Center of View On Map: " + onMapCenterOfView.x + ", " + onMapCenterOfView.y);
-		*/
-		
+				
 		// if the user did not move, dont play the moving animation
 		if (InteractEnable() && !gameModel.getPrevLocation().equals(gameModel.getCurLocation())){
 			
@@ -331,11 +323,19 @@ public class MainGameView extends JPanel implements Observer{
 			curX = gameModel.getCurLocation().x;
 			curY = gameModel.getCurLocation().y;
 			
-			getOnScreenTrainerMid();
 			getOnMapTrainerMid();
+			getOnScreenTrainerMid();
 			getOnMapCenterOfView();
 		}
 		repaint();
+		printTrack();
+	}
+	
+	private void printTrack(){
+		System.out.println("Current Coords of Trainer On Map: " + gameModel.getCurLocation().x + ", " + gameModel.getCurLocation().y );
+		System.out.println("Current Center of Trainer On Screen: " + onScreenTrainerMid.x + ", " + onScreenTrainerMid.y);
+		System.out.println("Current Center of Trainer On Map: " + onMapTrainerMid.x + ", " + onMapTrainerMid.y);
+		System.out.println("Current Center of View On Map: " + onMapCenterOfView.x + ", " + onMapCenterOfView.y);
 	}
 	
 		
@@ -597,6 +597,8 @@ public class MainGameView extends JPanel implements Observer{
 	private BufferedImage drawMapView(){
 		int Map_OFFSET_X = onMapCenterOfView.x - VisionRadius_X - 32;
 		int Map_OFFSET_Y = onMapCenterOfView.y - VisionRadius_Y - 32;
+		
+		//System.out.println("Map OFFSET_x: " + Map_OFFSET_X + ", Map OFFSET_x: " + Map_OFFSET_Y);
 		// check the current map
 		if (gameModel.getCurMap().getMapName().equals("00")){
 			return map_00.getSubimage(Map_OFFSET_X, Map_OFFSET_Y, 

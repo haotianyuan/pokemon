@@ -46,4 +46,10 @@ public class Rock extends Item{
 		}
 	}
 
+	@Override
+	public String getUsageMessage() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

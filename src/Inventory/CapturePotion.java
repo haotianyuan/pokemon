@@ -4,6 +4,9 @@ import Pokemon.Pokemon;
 import Trainer.Trainer;
 
 public class CapturePotion extends Item{
+
+	private static final long serialVersionUID = -558710047797124501L;
+	
 	private double alteredChance;
 
 	public CapturePotion(String name, double alterChance, ItemType type) {
@@ -36,6 +39,11 @@ public class CapturePotion extends Item{
 	@Override
 	public String getInfo() {
 		return "Permanently increase the chance of capture by " + this.alteredChance * 100 + "%";
+	}
+
+	@Override
+	public String getUsageMessage() {
+		return "You drink a Capture Poition";
 	}
 
 }

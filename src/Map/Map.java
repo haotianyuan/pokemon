@@ -35,20 +35,20 @@ public abstract class Map implements Serializable{
 				map[i][j] = new MapBlock(GroundType.GRASSLAND);
 				mapIndex[i][j] = 0;
 				// set the tag for border
-				if (i == 0 || j == 0){
+				if (i == 0 || j == 0 || i == MapSize_X - 1 || j == MapSize_Y - 1){
 					map[i][j].setObstacle(ObstacleType.BORDER);
 					mapIndex[i][j] = 99;
 				}
 			}
 		}
 		
-		/*
-		for (int i = 0; i < MapSize_X - 2; i ++){
-			for (int j = 0; j < MapSize_Y - 2; j ++){
+		
+		for (int i = 0; i < MapSize_X; i ++){
+			for (int j = 0; j < MapSize_Y; j ++){
 				mapIndex[i][j] = 0;
 			}
 		}
-		*/
+
 
 		
 	}
@@ -91,7 +91,8 @@ public abstract class Map implements Serializable{
 	
 	public abstract String getMapName();
 	
-	public abstract Map changeMap(Point portal);
+	public abstract String getTeleportMap(Point portal);
+	public abstract Point getTeleportPoint(Point portal);
 	
 	/*
 	public double getVisionRadiusVertical(){

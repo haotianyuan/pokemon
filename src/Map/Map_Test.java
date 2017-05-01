@@ -65,13 +65,19 @@ public class Map_Test extends Map{
 	}
 
 	@Override
-	public Map changeMap(Point portal) {
+	public String getTeleportMap(Point portal) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String getMapName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Point getTeleportPoint(Point portal) {
 		// TODO Auto-generated method stub
 		return null;
 	}

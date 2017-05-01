@@ -45,4 +45,10 @@ public class Bait extends Item{
 			return false;
 		}
 	}
+
+	@Override
+	public String getUsageMessage() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

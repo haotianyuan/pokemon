@@ -30,14 +30,25 @@ public class Map_00 extends Map{
 	}
 
 	@Override
-	public Map changeMap(Point portal) {
-		// TODO Auto-generated method stub
-		return null;
+	public String getTeleportMap(Point portal) {
+		if (portal.y == MapSize_Y - 2){
+			return "10";
+		}
+		else{
+			return null;
+		}
 	}
 
 	@Override
+	public Point getTeleportPoint(Point portal) {
+		Point p = new Point();
+		p.setLocation(portal.x, 2);
+		return p;
+	}
+	
+	@Override
 	public String getMapName() {
 		return MapTagName;
-	}	
+	}
 
 }

@@ -16,6 +16,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -44,6 +45,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	// combat pokemon information
 	private Pokemon curPokemon;	// current encountering pokemon
+	private JLabel battleInfo;
 
 	
 	// declare variables for animation
@@ -125,6 +127,8 @@ public class BattleView extends JPanel implements Observer{
 			curPokemon = null;
 			return;
 		}
+		
+		
 		
 		resetData();
 		

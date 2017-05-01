@@ -53,7 +53,7 @@ public class GameModel extends Observable implements Serializable{
 		setLocation(22, 30);
 		xPrevCoords = 22;
 		yPrevCoords = 30;
-		setCurMap(map_00);
+		setCurMap(map_01);
 		setMission(new Mission(MissionType.TEST));
 		
 		curTrainer.catchPokemon(new Abra("A_1"));
@@ -174,7 +174,8 @@ public class GameModel extends Observable implements Serializable{
 	private void changeDir(Direction dir){
 		this.curTrainer.setFaceDir(dir);
 	}
-		
+	
+	/************ algorithm to move the character ************/
 	// move the trainer
 	public void moveTrainer(Direction dir){
 		// change direction first
@@ -219,23 +220,64 @@ public class GameModel extends Observable implements Serializable{
 			System.out.println("Encounter Obstacle: " + curMap.getBlock(nextX, nextY).getObstacle().name());
 			setLocation(xCoords, yCoords);
 			update();
+			return;
 		}
-		/*
 		// trigger the portal
 		else if (curMap.getBlock(nextX, nextY).getInteractType() == InteractType.PORTAL){
 			// count step
 			curTrainer.incrementStep(1);
-			// TODO: call the change map function of the map
-			Point p = new Point();
-			p.setLocation(nextX, nextY);						
-			curMap = curMap.changeMap(p);
-		}
-		*/		
+			System.out.println("Encounter Interactable: " + curMap.getBlock(nextX, nextY).getInteractType().name());
+			teleportOnline(new Point(nextX, nextY));	
+			update();
+			return;
+		}	
 		else{
 			setLocation(nextX, nextY);
 			curTrainer.incrementStep(1);
 			update();
-			//pokemonEncounter();
+			return;
+		}
+	}
+	
+	// call the teleport
+	public void teleportOnline(Point p){
+		Point nextPoint = curMap.getTeleportPoint(p);
+		String nextMapTag = curMap.getTeleportMap(p);
+		if (nextMapTag == "00"){
+			curMap = map_00;
+		}
+		else if (nextMapTag == "01"){
+			curMap = map_01;
+		}
+		else if (nextMapTag == "02"){
+			curMap = map_02;
+		}
+		else if (nextMapTag == "10"){
+			curMap = map_10;
+		}
+		else if (nextMapTag == "11"){
+			curMap = map_11;
+		}
+		else if (nextMapTag == "12"){
+			curMap = map_12;
+		}
+		else{
+			return;
+		}
+		setLocation(nextPoint.x, nextPoint.y);
+		setLocation(nextPoint.x, nextPoint.y);
+		
+		System.out.println("Next map: " + curMap.getMapName());
+		System.out.println("Next start point: " + xCoords + ", " + yCoords);
+	}
+	
+	// check if the character is on portal
+	public boolean onPortal(){
+		if (curMap.getBlock(xCoords, yCoords).getInteractType() == InteractType.PORTAL){
+			return true;
+		}
+		else{
+			return false;
 		}
 	}
 	

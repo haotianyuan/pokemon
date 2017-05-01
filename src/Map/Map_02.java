@@ -31,13 +31,34 @@ public class Map_02 extends Map{
 	}
 
 	@Override
-	public Map changeMap(Point portal) {
-		// TODO Auto-generated method stub
-		return null;
+	public String getTeleportMap(Point portal) {
+		if (portal.y == MapSize_Y - 2){
+			return "12";
+		}
+		else if (portal.x == 4 && portal.y == 1){
+			return "01";
+		}
+		else{
+			return null;
+		}
 	}
+	
+	@Override
+	public Point getTeleportPoint(Point portal) {
+		if (portal.y == MapSize_Y - 2){
+			return (new Point(portal.x, 2));
+		}
+		else if (portal.x == 4 && portal.y == 1){
+			return (new Point(MapSize_Y - 2, 4));
+		}
+		else{
+			return null;
+		}
+	}	
 
 	@Override
 	public String getMapName() {
 		return MapTagName;
-	}	
+	}
+	
 }

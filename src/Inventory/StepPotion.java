@@ -39,4 +39,10 @@ public class StepPotion extends Item{
 		}
 	}
 
+	@Override
+	public String getUsageMessage() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

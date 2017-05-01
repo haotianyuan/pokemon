@@ -43,4 +43,9 @@ public class HealPotion extends Item{
 
 	}
 
+	@Override
+	public String getUsageMessage() {
+		return "You use a Health Potion upon \nthe wild pokemon";
+	}
+
 }
