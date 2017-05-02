@@ -2,7 +2,7 @@ package Map;
 
 import java.awt.Point;
 
-public class Map_00 extends Map{
+public class Map_00 extends MapPokemon{
 
 	private static final long serialVersionUID = -2250637403160453799L;
 	private static final String MapTextFileName = "Map_260.txt";

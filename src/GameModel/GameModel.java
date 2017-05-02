@@ -34,7 +34,7 @@ public class GameModel extends Observable implements Serializable{
 	private Map_11 map_11;
 	private Map_12 map_12;
 	
-	private Map curMap;
+	private MapPokemon curMap;
 	private boolean teleporting = false;
 	
 	// battle information
@@ -88,7 +88,7 @@ public class GameModel extends Observable implements Serializable{
 	 */
 	
 	/**************** Map Related ***************/
-	public void setCurMap(Map map){
+	public void setCurMap(MapPokemon map){
 		this.curMap = map;
 	}
 		
@@ -151,7 +151,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	// get the current map of the game
-	public Map getCurMap(){
+	public MapPokemon getCurMap(){
 		return curMap;
 	}
 	

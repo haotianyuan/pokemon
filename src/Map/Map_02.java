@@ -2,7 +2,7 @@ package Map;
 
 import java.awt.Point;
 
-public class Map_02 extends Map{
+public class Map_02 extends MapPokemon{
 	
 	private static final long serialVersionUID = -4335937365325101997L;
 	

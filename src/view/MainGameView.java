@@ -28,6 +28,8 @@ import Map.GroundType;
 import Map.Map_00;
 import Map.ObstacleType;
 import javazoom.jl.player.Player;
+import javazoom.jlgui.basicplayer.BasicPlayer;
+import javazoom.jlgui.basicplayer.BasicPlayerException;
 
 public class MainGameView extends JPanel implements Observer{
 
@@ -859,7 +861,7 @@ public class MainGameView extends JPanel implements Observer{
 	 *  	  SoundTrack Creator Below         *
 	 * *************************************** *
 	 */
-	private Player MyAudioPlayer;
+	private BasicPlayer MyAudioPlayer;
 	private Thread playerThread;
 	private static String curBackMusicFileName = "route_101.mp3";
 	
@@ -870,7 +872,9 @@ public class MainGameView extends JPanel implements Observer{
 	    	String soundtrackFolder = "soundtrack" + File.separator;
 	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
 	    	BufferedInputStream bis = new BufferedInputStream(fis);
-	    	MyAudioPlayer = new Player(bis);
+	    	MyAudioPlayer = new BasicPlayer();
+	    	MyAudioPlayer.open(bis);
+	    	MyAudioPlayer.play();;
 	    } 
 	    catch (Exception e) {
 	        System.err.printf("%s\n", e.getMessage());
@@ -893,7 +897,12 @@ public class MainGameView extends JPanel implements Observer{
 	
 	public void stopPlayCurSound(){
 		if (MyAudioPlayer != null) {
-			MyAudioPlayer.close();
+			try {
+				MyAudioPlayer.stop();
+			} catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			};
 		}
 		
 		if (playerThread != null){
@@ -934,6 +943,9 @@ public class MainGameView extends JPanel implements Observer{
 			
 			//if (backgroundPlayer.)
 			generalCounter ++;
+			if (MyAudioPlayer.getStatus() != 0){
+				System.out.println(MyAudioPlayer.getStatus());
+			}
 		
 		}
 	

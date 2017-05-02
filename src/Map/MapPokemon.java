@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public abstract class Map implements Serializable{
+public abstract class MapPokemon implements Serializable{
 
 	private static final long serialVersionUID = -2330121193394533506L;
 	private static final String MapFolderPath = "images"+ File.separator + "Map" + File.separator + "MapText" + File.separator;
@@ -18,7 +18,7 @@ public abstract class Map implements Serializable{
 	protected final int MapSize_X;
 	protected final int MapSize_Y;
 	
-	public Map(int height, int width){
+	public MapPokemon(int height, int width){
 		MapSize_X = width + 2;
 		MapSize_Y = height + 2;
 		initMap();
