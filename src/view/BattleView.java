@@ -24,6 +24,7 @@ import java.util.Observer;
 
 import javax.imageio.ImageIO;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -216,6 +217,14 @@ public class BattleView extends JPanel implements Observer{
 	}
 	
 	private void endBattle(){
+		if (caughtTimer != null){
+			caughtTimer.stop();
+			
+			caughtEnd = true;
+			caughtStarted = false;
+			caughtCounter = 0;
+		}
+		
 		battleInfoBoard.setVisible(false);
 		battleEnd = true;
 		curPokemon = null;
@@ -223,6 +232,8 @@ public class BattleView extends JPanel implements Observer{
 		gameModel.setEncounteredThisBlock(false);
 		generalTimer.stop();
 		generalCounter = 0;
+		this.stopAllSoundTrack();
+		
 	}
 	
 	public boolean InteractEnable(){
@@ -246,7 +257,7 @@ public class BattleView extends JPanel implements Observer{
 			
 			System.out.println("Click on: " + x + ", " + y);
 			
-			if (!battleEnd && (isCaught && caughtEnd)){
+			if (!battleEnd){
 				//int x = e.getX();
 				//int y = e.getY();
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
@@ -1182,6 +1193,14 @@ public class BattleView extends JPanel implements Observer{
 			BallShakeStarted = true;
 			BallShakeEnd = false;
 		}
+		else if (usingItemClass == Bait.class){
+			System.out.println("play bait sound");
+			playEffectSound(BaitSoundEffectFileName);
+		}
+		else if (usingItemClass == Rock.class){
+			System.out.println("play rock sound");
+			playEffectSound(RockSoundEffectFileName);
+		}
 		itemEffectTimer.start();
 	}
 	
@@ -1217,6 +1236,8 @@ public class BattleView extends JPanel implements Observer{
 			/////////////// Check if Caught for Ball Use ///////////////
 			if (gameModel.checkIfCaughtPokemon(gameModel.getTrainer().getCurEncounterPokemon())){
 				isCaught = true;
+				battleInfoBoard.setText("<html>CONGRATULATIONS!!!<br>"
+						+ "YOU CAUGHT A " + "<font color='#33f70c' ><u>" + gameModel.getTrainer().getCurEncounterPokemon().getName().toUpperCase() + "</u></font>" + "</html>");
 				playCaughtAnimation();
 			}
 			else{
@@ -1375,8 +1396,11 @@ public class BattleView extends JPanel implements Observer{
 		caughtStarted = true;
 		caughtEnd = false;
 		
+		stopPlayBackgroundSound();
+		backgroundPlayer = null;
 		playEffectSound(CatchMusicFileName);
 		caughtTimer.start();
+		callEndOptionPane();
 		
 		
 	}
@@ -1391,7 +1415,8 @@ public class BattleView extends JPanel implements Observer{
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			if (caughtEnd || caughtCounter >= 30){
+			/*
+			if (caughtEnd){
 				caughtStarted = false;
 				caughtTimer.stop();
 				caughtCounter = 0;
@@ -1399,14 +1424,16 @@ public class BattleView extends JPanel implements Observer{
 				playTransitionAnimation();
 				
 			}
-			else{
-				if (caughtCounter == 3){
-					generalCounter = 0;
-					//playBackgroundMusic(VictoryMusicFileName);
+			*/
+
+				// wait the catch effect sound end
+				if (caughtCounter >= 1 && backgroundPlayer == null){
+					//generalCounter = 0;
+					playBackgroundMusic(VictoryMusicFileName);
 				}
 				repaint();
 				caughtCounter++;		
-			}
+
 		}
 	}	
 	
@@ -1428,10 +1455,11 @@ public class BattleView extends JPanel implements Observer{
 			// reset the counter when go beyond 50
 			if (generalCounter > 1150 && curBackgroundMusicFileName.equals(BattleMusicFileName)){
 				playBackgroundMusic(BattleMusicFileName);
-				
+				generalCounter = 0;
 			}		
 			else if (generalCounter > 450 && curBackgroundMusicFileName.equals(VictoryMusicFileName)){
 				playBackgroundMusic(VictoryMusicFileName);
+				generalCounter = 0;
 			}
 			else if (generalCounter == 0){
 				if (isCaught){
@@ -1481,7 +1509,7 @@ public class BattleView extends JPanel implements Observer{
 		//System.out.println("Pokemon Mid Location: " + pokemonMidLocation_X + ", " + pokemonMidLocation_Y);
 		
 		// draw the back ground
-		if ((transStarted && !transEnd) || caughtCounter >= 2){
+		if ((transStarted && !transEnd  && isCaught) || caughtCounter >= 2){
 			g2.drawImage(drawVictoryField(GroundType.GRASSLAND), 0, 0, null);
 		}
 		else{
@@ -1502,7 +1530,7 @@ public class BattleView extends JPanel implements Observer{
 		}
 		
 		// draw trainer
-		if ((transStarted && !transEnd) || caughtCounter >= 2){
+		if ((transStarted && !transEnd && isCaught) || caughtCounter >= 2){
 			g2.drawImage(drawTrainerPose(), 240 - Trainer_Victory_Width/2, 160 - Trainer_Victory_Height + 30, null);
 		}
 		else{
@@ -1541,7 +1569,9 @@ public class BattleView extends JPanel implements Observer{
 		if (usingItemClass.isAssignableFrom(SafariBall.class)){
 			// get the upper left point of the ball
 			Point p = generateRollingBallUpperLeft(itemEffectCounter);
-			System.out.println("Location: " + p.x + ", " + p.y);
+			
+			//System.out.println("Location: " + p.x + ", " + p.y);
+			
 			// rotate the ball
 			BufferedImage img = itemSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
 					Ball_Regular_Width, Ball_Regular_Height);	
@@ -1739,6 +1769,8 @@ public class BattleView extends JPanel implements Observer{
 	
 	////////////////// Vcitory Sound /////////////////
 	private final static String CatchMusicFileName = "catch.mp3";
+	private final static String BaitSoundEffectFileName = "Bait_Effect.mp3";
+	private final static String RockSoundEffectFileName = "Rock_Effect.mp3";
 	private Player effectPlayer;
 	private Thread effectThread;
 	
@@ -1777,6 +1809,35 @@ public class BattleView extends JPanel implements Observer{
 		if (effectThread != null){
 			effectThread.interrupt();
 		}
+	}
+	
+	
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	
+	private boolean endGameOptionPaneStarted = false;
+	JOptionPane endGameOptionPane = new JOptionPane();
+	
+	private void callEndOptionPane(){
+		String newName = endGameOptionPane.showInputDialog("Do you want a new name for it?");
+		if (newName == null){
+			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
+			
+			System.out.println("no new name");
+		}
+		else{
+			gameModel.getTrainer().getCurEncounterPokemon().setName(newName);
+			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
+			
+		}
+		//System.out.println("" + gameModel.getTrainer().getPokemonCollection().getSize());
+		
+		// end the battle
+		playTransitionAnimation();
 	}
 
 }

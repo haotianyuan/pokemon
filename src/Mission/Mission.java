@@ -66,7 +66,7 @@ public class Mission implements Serializable{
 			this.stepCap = 500;
 			this.initBall = 30;
 			this.rareRequirement = 0;
-			this.totalRequirement = 5;
+			this.totalRequirement = 15;
 			this.legendRequirement = 0;
 		}
 	}

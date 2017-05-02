@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -53,10 +54,7 @@ public class RunPokemon extends JFrame {
 	private static final long serialVersionUID = 7487437405760007377L;
 
 	private String SAVEFILENAME_GAME = "PokemonGame.ser";
-	
-	private Player MyAudioPlayer;
-	private Thread playerThread;
-	
+		
 	// declare the main window
 	private final static int DefaultHeight = 1200;
 	private final static int DefaultWidth = 800;
@@ -165,7 +163,7 @@ public class RunPokemon extends JFrame {
 
 				addObservers();
 				setViewTo(mainGamePanel);	// default starting view
-				playMainGameBackgroundMusic();
+				mainGamePanel.startGeneralTimer();
 	}
 	
 	private void setViewTo(JPanel newView) {
@@ -254,7 +252,7 @@ public class RunPokemon extends JFrame {
 	}
 	
 	// show the inventory table
-	public void setUpInventory(){
+	public JScrollPane setUpInventory(){
 		inventoryTable = new JTable(gameModel.getTrainer().getInventory());
 		RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(gameModel.getTrainer().getInventory());
 		inventoryTable.setRowSorter(sorter);
@@ -265,10 +263,12 @@ public class RunPokemon extends JFrame {
 		inventoryTable.getColumn("Quantity").setCellRenderer( centerRenderer );
 		inventoryTable.getColumnModel().getColumn(0).setPreferredWidth(40);
 		inventoryTable.getColumnModel().getColumn(1).setPreferredWidth(40);
-
+		inventoryTable.setAutoCreateColumnsFromModel(true);
+		
 		JScrollPane pane = new JScrollPane(inventoryTable);
 		pane.setBounds(720, 220, 270, 150);
 		getContentPane().add(pane);
+		return pane;
 	}
 	
 	//////////////////// Add Buttons ////////////////////
@@ -327,11 +327,12 @@ public class RunPokemon extends JFrame {
 		
 		pokedexButton.setBorderPainted(false);
 		pokedexButton.setFocusPainted(false);
+		pokedexButton.addActionListener(new checkPokedexButtonListener());
 		getContentPane().add(pokedexButton);
 	}
 	
 	// show the inventory table
-	public void setUpPokemonTable(){
+	public JScrollPane setUpPokemonTable(){
 		pokemonTable = new JTable(gameModel.getTrainer().getPokemonCollection());
 		RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(gameModel.getTrainer().getPokemonCollection());
 		pokemonTable.setRowSorter(sorter);
@@ -345,10 +346,13 @@ public class RunPokemon extends JFrame {
 		pokemonTable.getColumnModel().getColumn(0).setPreferredWidth(40);
 		pokemonTable.getColumnModel().getColumn(1).setPreferredWidth(40);
 		pokemonTable.getColumnModel().getColumn(2).setPreferredWidth(40);
+		pokemonTable.setAutoCreateColumnsFromModel(true);
 		
 		JScrollPane pane = new JScrollPane(pokemonTable);
 		pane.setBounds(720, 410, 405, 150);
 		getContentPane().add(pane);
+		
+		return pane;
 	}
 		
 	
@@ -384,7 +388,12 @@ public class RunPokemon extends JFrame {
 		}
 	}
 		
-	// add the button listener for using the item button
+	/*
+	 * *************************************** *
+	 *  		Listener Creator Below         *
+	 * *************************************** *
+	 */
+	/*************** Use Item Button ****************/
 	private class useItemButtonListener implements ActionListener {
 
 		@Override
@@ -404,11 +413,6 @@ public class RunPokemon extends JFrame {
 				
 				gameModel.getTrainer().useItem(index, gameModel.getTrainer());					
 				
-				// update the information table
-				updateInfoBoard();
-				
-				// update the invertory table
-				inventoryTable.repaint();
 			}
 			else if (text.equals("Use Item") && currentView.getClass() == BattleView.class){
 				//System.out.println("Using Item during Battle");
@@ -429,12 +433,36 @@ public class RunPokemon extends JFrame {
 						gameModel.getTrainer().useItem(index, gameModel.getTrainer().getCurEncounterPokemon());
 					}
 				}
-				// update the information table
-				updateInfoBoard();
-				
-				// update the invertory table
-				inventoryTable.repaint();
 			}
+			// update the information table
+			updateInfoBoard();
+			
+			// update the invertory table
+			inventoryTable.repaint();
+			pokemonTable.repaint();
+		}
+		
+	}
+	
+	/*************** Pokedex Button ****************/
+	private class checkPokedexButtonListener implements ActionListener{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (!battlePanel.InteractEnable()){
+				return;
+			}
+			Object obj = ((JButton) e.getSource());
+			if (obj == pokedexButton && currentView.getClass() == MainGameView.class){
+			    JFrame frame = new JFrame();
+			    frame.setLayout(new BorderLayout());
+			    JScrollPane newPane = setUpPokemonTable();
+			    frame.add(newPane);
+			    frame.pack();
+			    frame.setLocationRelativeTo(null);
+			    frame.setVisible(true);
+			}
+			
 		}
 		
 	}
@@ -602,18 +630,23 @@ public class RunPokemon extends JFrame {
 			if (e.getComponent().getClass() == BattleView.class){
 				battlePanel.stopAllSoundTrack();
 				setViewTo(mainGamePanel);
-				playMainGameBackgroundMusic();
+				mainGamePanel.startGeneralTimer();
 			}
 			else if (e.getComponent().getClass() == MainGameView.class){
 				// save the game before going into battle
 				saveData();
-				stopPlayCurSound();
+				mainGamePanel.stopPlayCurSound();
 				battlePanel.startBattle();
 				setViewTo(battlePanel);
 			}
 			else{
 				// TODO: 
 			}
+			inventoryTable.requestFocus();
+			inventoryTable.repaint();
+			
+			pokemonTable.requestFocus();
+			pokemonTable.repaint();
 		}
 
 		@Override
@@ -777,53 +810,6 @@ public class RunPokemon extends JFrame {
 		return pokedexSheet.getSubimage(Pokedex_OFFSET_X , Pokedex_OFFSET_Y,
 				Pokedex_Width, Pokedex_Height);
 	}	
-	
-	
-	/*
-	 * *************************************** *
-	 *  	  SoundTrack Creator Below         *
-	 * *************************************** *
-	 */
-	
-	private static String curBackMusicFileName = "route_101.mp3";
-	
-	
-	public void playMainGameBackgroundMusic() {
-	    try {
-	    	String soundtrackFolder = "soundtrack" + File.separator;
-	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
-	    	BufferedInputStream bis = new BufferedInputStream(fis);
-	    	MyAudioPlayer = new Player(bis);
-	    } 
-	    catch (Exception e) {
-	        System.err.printf("%s\n", e.getMessage());
-	    }
-
-	    playerThread = new Thread() {
-	    	@Override
-	    	public void run() {
-	    		try {
-	    			MyAudioPlayer.play();
-	    		} 
-	    		catch (Exception e) {
-	    			System.err.printf("%s\n", e.getMessage());
-	    		}
-	    	}
-	    };
-	    
-	    playerThread.start();
-	}
-	
-	public void stopPlayCurSound(){
-		if (MyAudioPlayer != null) {
-			MyAudioPlayer.close();
-		}
-		
-		if (playerThread != null){
-			playerThread.interrupt();
-		}
-	}
-	
 	
 	
 }

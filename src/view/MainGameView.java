@@ -11,7 +11,9 @@ import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RasterFormatException;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
@@ -25,6 +27,7 @@ import GameModel.GameModel;
 import Map.GroundType;
 import Map.Map_00;
 import Map.ObstacleType;
+import javazoom.jl.player.Player;
 
 public class MainGameView extends JPanel implements Observer{
 
@@ -315,6 +318,7 @@ public class MainGameView extends JPanel implements Observer{
 				transEnd = true;
 				if (gameModel.getTrainer().getCurEncounterPokemon() != null){
 					setVisible(false);
+					generalTimer.stop();
 					return;
 				}
 				
@@ -849,6 +853,91 @@ public class MainGameView extends JPanel implements Observer{
 		}
 	}
 	
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	private Player MyAudioPlayer;
+	private Thread playerThread;
+	private static String curBackMusicFileName = "route_101.mp3";
+	
+	
+	
+	public void playMainGameBackgroundMusic() {
+	    try {
+	    	String soundtrackFolder = "soundtrack" + File.separator;
+	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
+	    	BufferedInputStream bis = new BufferedInputStream(fis);
+	    	MyAudioPlayer = new Player(bis);
+	    } 
+	    catch (Exception e) {
+	        System.err.printf("%s\n", e.getMessage());
+	    }
+
+	    playerThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			MyAudioPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("%s\n", e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    playerThread.start();
+	}
+	
+	public void stopPlayCurSound(){
+		if (MyAudioPlayer != null) {
+			MyAudioPlayer.close();
+		}
+		
+		if (playerThread != null){
+			playerThread.interrupt();
+		}
+	}
+	
+	
+	
+	/**************** Overall Timer *****************/
+	////////////Item Timer ////////////
+	private Timer generalTimer;
+	private int generalCounter;
+
+	public void startGeneralTimer() {
+		generalCounter = 0;
+		generalTimer = new Timer(delayInMillis * 5, new generalTimerListener());
+		generalTimer.start();
+	}
+	
+	public void stopGeneralTimer(){
+		generalTimer.stop();
+	}
+
+	private class generalTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// reset the counter when go beyond 50
+			if (generalCounter > 910 && curBackMusicFileName.equals("route_101.mp3")){
+				playMainGameBackgroundMusic();
+				generalCounter  = 0;
+				
+			}		
+			else if (generalCounter == 0){
+				playMainGameBackgroundMusic();
+			}
+			
+			//if (backgroundPlayer.)
+			generalCounter ++;
+		
+		}
+	
+	}
 	
 	
 }
