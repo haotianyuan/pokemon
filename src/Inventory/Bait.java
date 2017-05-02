@@ -27,6 +27,7 @@ public class Bait extends Item{
 	public boolean useItem(Object object) {
 		if (checkItemUsable(object)){
 			this.decrement(1);
+			// take effect on the pokemon
 			return true;
 		}
 		else{
@@ -47,8 +48,7 @@ public class Bait extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getEffectMessage() {
+		return "FOCUS AND STEADY";
 	}
 }

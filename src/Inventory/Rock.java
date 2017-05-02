@@ -47,9 +47,8 @@ public class Rock extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getEffectMessage() {
+		return "WEAKENED AND FEAR";
 	}
 
 }

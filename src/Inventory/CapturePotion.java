@@ -42,7 +42,7 @@ public class CapturePotion extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
+	public String getEffectMessage() {
 		return "You drink a Capture Poition";
 	}
 

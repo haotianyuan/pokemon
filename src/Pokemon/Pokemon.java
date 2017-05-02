@@ -50,8 +50,8 @@ public abstract class Pokemon implements Serializable{
 	private String nickName;
 	private int curHP;
 	
-	//private double curCapRate;
-	//private double curRunChance;
+	private double increasedCapRate;
+	private double reducedRunChance;
 	
 	private int capHpLimit;	// the maximum hp allowed to be captured
 	//private int curMaxTurn;	// individual max turn
@@ -74,11 +74,11 @@ public abstract class Pokemon implements Serializable{
 		
 		// randomly generate capture rate
 		this.basicCapRate = randomCapRate(specy.getQuality().getCapRate());
-		//this.curCapRate = this.basicCapRate;
+		this.increasedCapRate = 0;
 		
 		// randomly generate run chance
 		this.basicRunChance = randomRunChance(specy.getQuality().getRunChance());
-		//this.curRunChance = this.basicRunChance;
+		this.reducedRunChance = 0;
 		
 		// randomly generate the maximum hp that allowed to be captured
 		this.capHpLimit = randomCapHP(this.maxHP);
@@ -104,7 +104,7 @@ public abstract class Pokemon implements Serializable{
 	// TODO: need a algorithm to randomly set up the capture 
 	//		rate basing on the basic capture rate
 	private double randomCapRate(double originCapRate){
-		return (double)originCapRate;
+		return originCapRate * ((Math.random() - 0.5) * 0.075 + 1 );
 	}
 	
 	
@@ -112,13 +112,13 @@ public abstract class Pokemon implements Serializable{
 	// 		run chance should be reversely propagate to the
 	//		capture rate
 	private double randomRunChance(double originRunChance){
-		return originRunChance;
+		return originRunChance * ((Math.random() - 0.5) * 0.075 + 1 );
 	}
 	
 	// TODO: need a algorithm to randomly set up the max hp for
 	//		capture
 	private int randomCapHP(int maxHP){
-		return (int)(0.5 * maxHP);
+		return (int)(0.2 * maxHP);
 	}
 	
 	// getter for the parameter
@@ -186,48 +186,47 @@ public abstract class Pokemon implements Serializable{
 		}
 	}
 	
-	/**************** No longer using this algorithm *******************/
-	/*
-		public double getCurCapRate(){
-		return this.curCapRate;
+
+	public double getCurCapRate(){
+		return basicCapRate * (1 + increasedCapRate);
 	}
 	
 	public double getCurRunChance(){
-		return this.curRunChance;
+		return basicRunChance * (1 - reducedRunChance);
+	}
+		
+	public void incrementAlteredCapRate(double incre){
+		this.increasedCapRate *= 1 + incre;
+		if(this.increasedCapRate > 1){
+			this.increasedCapRate = 1.0;
+		}
 	}
 	
+	public void decrementAlteredCapRate(double decre){
+		this.increasedCapRate *= 1 - decre;
+		if(this.increasedCapRate < 0){
+			this.increasedCapRate = 0;
+		}
+	}
+	
+	public void incrementAlteredRunChance(double incre){
+		this.reducedRunChance *= 1 + incre;
+		if (this.reducedRunChance > 1){
+			this.reducedRunChance = 1;
+		}
+	}
+	
+	public void decrementAlteredRunChance(double decre){
+		this.reducedRunChance *= 1 - decre;
+		if (this.reducedRunChance < 0){
+			this.reducedRunChance = 0;
+		}
+	}
+	
+	/*
 	public int getCurMaxTurn()	{
 		return this.curMaxTurn;
 	}
-	
-	public void incrementCapRate(double incre){
-		this.curCapRate *= 1 + incre;
-		if(this.curCapRate > 1){
-			this.curCapRate = 1.0;
-		}
-	}
-	
-	public void decrementCapRate(double decre){
-		this.curCapRate *= 1 - decre;
-		if(this.curCapRate < 0){
-			this.curCapRate = 0;
-		}
-	}
-	
-	public void incrementRunChance(double incre){
-		this.curRunChance *= 1 + incre;
-		if (this.curRunChance > 1){
-			this.curRunChance = 1;
-		}
-	}
-	
-	public void decrementRunChance(double decre){
-		this.curRunChance *= 1 - decre;
-		if (this.curRunChance < 0){
-			this.curRunChance = 0;
-		}
-	}
-	
 	
 	public void incrementMaxTurn(int incre){
 		this.curMaxTurn += incre;
@@ -240,6 +239,7 @@ public abstract class Pokemon implements Serializable{
 		}
 	}
 	*/
+
 		
 	public void recordCapTurn(int turn){
 		this.captureTurn = turn;

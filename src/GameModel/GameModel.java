@@ -22,6 +22,8 @@ public class GameModel extends Observable implements Serializable{
 	private int yCoords;
 	private int xPrevCoords;
 	private int yPrevCoords;
+	private int xNext;
+	private int yNext;
 		
 	// map information
 	private Map_Test map_Test;
@@ -33,6 +35,7 @@ public class GameModel extends Observable implements Serializable{
 	private Map_12 map_12;
 	
 	private Map curMap;
+	private boolean teleporting = false;
 	
 	// battle information
 	private WildPokemonGenerator wildPokemonGenerator;
@@ -227,7 +230,10 @@ public class GameModel extends Observable implements Serializable{
 			// count step
 			curTrainer.incrementStep(1);
 			System.out.println("Encounter Interactable: " + curMap.getBlock(nextX, nextY).getInteractType().name());
-			teleportOnline(new Point(nextX, nextY));	
+			xNext = nextX;
+			yNext = nextY;
+			//teleportOnline(new Point(nextX, nextY));
+			teleporting = true;
 			update();
 			return;
 		}	
@@ -272,13 +278,14 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	// check if the character is on portal
-	public boolean onPortal(){
-		if (curMap.getBlock(xCoords, yCoords).getInteractType() == InteractType.PORTAL){
-			return true;
-		}
-		else{
-			return false;
-		}
+	public boolean isTeleporting(){
+		return teleporting;
+	}
+	
+	public void doneTeleporting(){
+		teleporting = false;
+		teleportOnline(new Point(xNext, yNext));
+		update();
 	}
 	
 	// Algorithm to encounter a pokemon when moving upon area that could met a pokemon
@@ -308,7 +315,7 @@ public class GameModel extends Observable implements Serializable{
 	/************ algorithm to check if the pokemon is caught ************/
 	public boolean checkIfCaughtPokemon(Pokemon p){
 		// calculate the dynamic catch rate
-		if (Math.random() < calculateCurCaughtChance(p)){
+		if (Math.random() < calculateCurCaughtChance(p) + 1){
 			return true;
 		}
 		else{
@@ -318,7 +325,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	public double calculateCurCaughtChance(Pokemon p){
-		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getBasicCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
 		return chance;
 	}
 	
@@ -331,13 +338,16 @@ public class GameModel extends Observable implements Serializable{
 		else if (Math.random() < calculateCurRunChance(p)){
 			return true;
 		}
+		else if (p.getCapTurn() > p.getQuality().getMaxTurn()){
+			return true;
+		}
 		else{
 			return false;
 		}
 	}
 	
 	public double calculateCurRunChance(Pokemon p){
-		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getBasicRunChance()) * (1 - curTrainer.getReducedRun());
+		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getCurRunChance()) * (1 - curTrainer.getReducedRun());
 		return chance;
 	}
 		

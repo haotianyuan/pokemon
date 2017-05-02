@@ -3,5 +3,14 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/commons-logging-api.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/jl1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/jogg-0.0.7.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/jorbis-0.0.15.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/jspeex0.9.7.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/tritonus_share.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/vorbisspi1.0.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Macmillan/Documents/gitrepos/pokemon_safari_zone/lib/basicplayer3.0.jar"/>
+	<classpathentry kind="lib" path="lib/mp3spi1.9.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

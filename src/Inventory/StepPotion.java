@@ -40,7 +40,7 @@ public class StepPotion extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
+	public String getEffectMessage() {
 		// TODO Auto-generated method stub
 		return null;
 	}

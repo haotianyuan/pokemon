@@ -13,6 +13,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -44,12 +45,18 @@ import GameModel.GameModel;
 import Inventory.ItemType;
 import Mission.Mission;
 import Mission.MissionType;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
 
 public class RunPokemon extends JFrame {
 	
 	private static final long serialVersionUID = 7487437405760007377L;
 
 	private String SAVEFILENAME_GAME = "PokemonGame.ser";
+	
+	private Player MyAudioPlayer;
+	private Thread playerThread;
+	
 	// declare the main window
 	private final static int DefaultHeight = 1200;
 	private final static int DefaultWidth = 800;
@@ -158,6 +165,7 @@ public class RunPokemon extends JFrame {
 
 				addObservers();
 				setViewTo(mainGamePanel);	// default starting view
+				playMainGameBackgroundMusic();
 	}
 	
 	private void setViewTo(JPanel newView) {
@@ -592,11 +600,14 @@ public class RunPokemon extends JFrame {
 		@Override
 		public void componentHidden(ComponentEvent e) {
 			if (e.getComponent().getClass() == BattleView.class){
+				battlePanel.stopAllSoundTrack();
 				setViewTo(mainGamePanel);
+				playMainGameBackgroundMusic();
 			}
 			else if (e.getComponent().getClass() == MainGameView.class){
 				// save the game before going into battle
 				saveData();
+				stopPlayCurSound();
 				battlePanel.startBattle();
 				setViewTo(battlePanel);
 			}
@@ -767,4 +778,53 @@ public class RunPokemon extends JFrame {
 				Pokedex_Width, Pokedex_Height);
 	}	
 	
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	
+	private static String curBackMusicFileName = "route_101.mp3";
+	
+	
+	public void playMainGameBackgroundMusic() {
+	    try {
+	    	String soundtrackFolder = "soundtrack" + File.separator;
+	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
+	    	BufferedInputStream bis = new BufferedInputStream(fis);
+	    	MyAudioPlayer = new Player(bis);
+	    } 
+	    catch (Exception e) {
+	        System.err.printf("%s\n", e.getMessage());
+	    }
+
+	    playerThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			MyAudioPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("%s\n", e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    playerThread.start();
+	}
+	
+	public void stopPlayCurSound(){
+		if (MyAudioPlayer != null) {
+			MyAudioPlayer.close();
+		}
+		
+		if (playerThread != null){
+			playerThread.interrupt();
+		}
+	}
+	
+	
+	
 }
+
