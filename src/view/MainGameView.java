@@ -945,13 +945,9 @@ public class MainGameView extends JPanel implements Observer{
 			generalCounter ++;
 			if (MyAudioPlayer.getStatus() != 0){
 				System.out.println(MyAudioPlayer.getStatus());
-			}
-		
+			}		
 		}
-	
-	}
-	
-	
+	}	
 }
 
 
