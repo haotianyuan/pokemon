@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+
 /*
  * Author: Mengtao Tang
  * Date: 4/20/2017
@@ -34,7 +37,10 @@ import java.util.Random;
  */
 
 
-public abstract class Pokemon implements Serializable{
+public abstract class Pokemon implements TableModel, Serializable{
+
+	private static final long serialVersionUID = 1847973297212434777L;
+	
 	// fixed data for the pokemon
 	private final LocalDateTime metDate;
 	private final Pokedex pokemonSpecy;
@@ -65,7 +71,7 @@ public abstract class Pokemon implements Serializable{
 		this.quality = specy.getQuality();
 		this.randomSeed = specy.getIndex();
 		
-		this.name = name;
+		this.name = specy.getName();
 		this.nickName = name;
 		
 		// randomly generate hp
@@ -196,14 +202,14 @@ public abstract class Pokemon implements Serializable{
 	}
 		
 	public void incrementAlteredCapRate(double incre){
-		this.increasedCapRate *= 1 + incre;
+		this.increasedCapRate *= (1 + incre);
 		if(this.increasedCapRate > 1){
 			this.increasedCapRate = 1.0;
 		}
 	}
 	
 	public void decrementAlteredCapRate(double decre){
-		this.increasedCapRate *= 1 - decre;
+		this.increasedCapRate *= (1 - decre);
 		if(this.increasedCapRate < 0){
 			this.increasedCapRate = 0;
 		}
@@ -248,5 +254,152 @@ public abstract class Pokemon implements Serializable{
 	public String getNickName(){
 		return this.nickName;
 	}
+	
+	
+	
+	@Override
+	public void addTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Class<?> getColumnClass(int col) {
+		return String.class;
+	}
+
+	@Override
+	public int getColumnCount() {
+		return 2;
+	}
+
+	@Override
+	public String getColumnName(int col) {
+		if (col == 0){
+			return "Name";
+		}
+		
+		if (col == 1){
+			return "Value";
+		}
+		
+		return null;
+	}
+
+	@Override
+	public int getRowCount() {
+		// TODO Auto-generated method stub
+		return 13;
+	}
+
+	@Override
+	public Object getValueAt(int row, int col) {
+		if (row == 0 && col == 0){
+			return "Specy";
+		}
+		if (row == 0 && col == 1){
+			return this.getSpecy().getName();
+		}
+		
+		if (row == 1 && col == 0){
+			return "Nickname";
+		}
+		if (row == 1 && col == 1){
+			return this.getNickName();
+		}
+		
+		if (row == 2 && col == 0){
+			return "Meet Date";
+		}
+		if (row == 2 && col == 1){
+			return this.recordMetDate();
+		}
+		
+		if (row == 3 && col == 0){
+			return "Current HP";
+		}
+		if (row == 3 && col == 1){
+			return this.getCurHP();
+		}
+		
+		if (row == 4 && col == 0){
+			return "Max HP";
+		}
+		if (row == 4 && col == 1){
+			return this.getMaxHP();
+		}
+		
+		if (row == 5 && col == 0){
+			return "Quality";
+		}
+		if (row == 5 && col == 1){
+			return this.getSpecy().getQuality();
+		}
+		
+		if (row == 6 && col == 0){
+			return "Basic Capture Chance";
+		}
+		if (row == 6 && col == 1){
+			return this.getBasicCapRate();
+		}
+		
+		if (row == 7 && col == 0){
+			return "Basic Run Chance";
+		}
+		if (row == 7 && col == 1){
+			return this.getBasicRunChance();
+		}
+		
+		if (row == 8 && col == 0){
+			return "Max Turn Before Run";
+		}
+		if (row == 8 && col == 1){
+			return this.getBasicMaxTurn();
+		}
+		
+		if (row == 9 && col == 0){
+			return "Current Capture Chance";
+		}
+		if (row == 9 && col == 1){
+			return this.getCurCapRate();
+		}
+		
+		if (row == 10 && col == 0){
+			return "Current Run Chance";
+		}
+		if (row == 10 && col == 1){
+			return this.getCurRunChance();
+		}
+		
+		if (row == 11 && col == 0){
+			return "Turn Used";
+		}
+		if (row == 11 && col == 1){
+			return this.getCapTurn();
+		}
+		
+		return null;
+	}
+
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void removeTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	
+	
 	
 }

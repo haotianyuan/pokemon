@@ -259,6 +259,7 @@ public class BattleView extends JPanel implements Observer{
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
 						&& y >= 320 - RunButtonHeight - RunButtonHeight_OFFSET && y < 320 - RunButtonHeight_OFFSET){
 					System.out.println("Click on: " + x + ", " + y);
+					gameModel.getTrainer().justCaught = false;
 					playTransitionAnimation();
 				}
 			}			
@@ -1238,9 +1239,13 @@ public class BattleView extends JPanel implements Observer{
 				battleInfoBoard.setText("<html>CONGRATULATIONS!!!<br>"
 						+ "YOU CAUGHT A " + "<font color='#33f70c' ><u>" + gameModel.getTrainer().getCurEncounterPokemon().getName().toUpperCase() + "</u></font>" + "</html>");
 				playCaughtAnimation();
+				gameModel.getTrainer().justCaught = true;
 			}
 			else{
 				// TODO: playEscapeAnimation();
+				// set board info
+				battleInfoBoard.setText("<html>THE WILD POKEMON ESCAPED FROM THE BALL<br>KEEP IT UP</html>");
+				repaint();
 			}
 			
 		}
@@ -1248,6 +1253,9 @@ public class BattleView extends JPanel implements Observer{
 		else{
 			if (gameModel.checkIfRunPokemon(gameModel.getTrainer().getCurEncounterPokemon())){
 				// TODO: playRunAwayAnimation();
+				// set board info
+				battleInfoBoard.setText("<html>THE WILD POKEMON RUNS AWAY<br>BATTLE END</html>");
+				gameModel.getTrainer().justCaught = false;
 			}
 			else{
 				// set board info
@@ -1734,7 +1742,7 @@ public class BattleView extends JPanel implements Observer{
 	    	//BufferedInputStream bis = new BufferedInputStream(fis);
 	    	curBackgroundPlayer = new BasicPlayer();
 	    	curBackgroundPlayer.open(fis);
-	    	curBackgroundPlayer.setGain(0.1);
+	    	//curBackgroundPlayer.setGain(0.1);
 	    } 
 	    catch (Exception e) {
 	    	e.printStackTrace();
@@ -1843,17 +1851,17 @@ public class BattleView extends JPanel implements Observer{
 	 */
 	
 	private boolean endGameOptionPaneStarted = false;
-	JOptionPane endGameOptionPane = new JOptionPane();
+	//JOptionPane endGameOptionPane = new JOptionPane();
 	
 	private void callEndOptionPane(){
 		endGameOptionPaneStarted = true;
-		String newName = endGameOptionPane.showInputDialog("Do you want a new name for it?");
+		String newName = JOptionPane.showInputDialog("Do you want a new name for it?");
 		if (newName == null){
 			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
 			
 			System.out.println("no new name");
 		}
-		else{
+		else{			
 			gameModel.getTrainer().getCurEncounterPokemon().setName(newName);
 			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
 			

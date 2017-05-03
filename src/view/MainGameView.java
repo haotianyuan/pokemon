@@ -865,18 +865,24 @@ public class MainGameView extends JPanel implements Observer{
 	private BasicPlayer MyAudioPlayer;
 	private Thread playerThread;
 	private static String curBackMusicFileName = "route_101.mp3";
-	
-	
+	private final static String soundtrackFolder = "soundtrack" + File.separator;
 	
 	public void playMainGameBackgroundMusic() {
 	    try {
 	    	stopPlayCurSound();
-	    	String soundtrackFolder = "soundtrack" + File.separator;
-	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
-	    	BufferedInputStream bis = new BufferedInputStream(fis);
+	    	if (Math.random() > 0.66){
+	    		curBackMusicFileName = "route_120.mp3";
+	    	}
+	    	else if (Math.random() > 0.33 && Math.random() <= 0.66){
+	    		curBackMusicFileName = "route_120.mp3";
+	    	}
+	    	else{
+	    		curBackMusicFileName = "verdanturf_town.mp3";
+	    	}
+	    	
+	    	File file = new File(soundtrackFolder + curBackMusicFileName);
 	    	MyAudioPlayer = new BasicPlayer();
-	    	MyAudioPlayer.open(bis);
-	    	MyAudioPlayer.play();
+	    	MyAudioPlayer.open(file);
 	    } 
 	    catch (Exception e) {
 	        System.err.printf("%s\n", e.getMessage());

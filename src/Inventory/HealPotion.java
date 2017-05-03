@@ -15,7 +15,7 @@ public class HealPotion extends Item{
 	
 	@Override
 	public String getInfo() {
-		return "restore " + this.restoreAmount + " health to the selected pokemon";
+		return "This healing potion will recover " + restoreAmount + " for the pokemon. It can be only used during battle.";
 	}
 
 	@Override
@@ -47,5 +47,6 @@ public class HealPotion extends Item{
 	public String getEffectMessage() {
 		return "COMFORTABLE";
 	}
+
 
 }

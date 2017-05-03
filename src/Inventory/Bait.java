@@ -7,11 +7,11 @@ public class Bait extends Item{
 
 	private static final long serialVersionUID = 5729623957892624516L;
 	
-	private double reducedCaptureRate;
-	private double reducedRunChance;
+	private double reducedCaptureRate = -0.03;
+	private double reducedRunChance = 0.03;
 	
 	// extra
-	private int extendTurn;
+	//private int extendTurn;
 
 	// constructor
 	public Bait(){
@@ -20,12 +20,14 @@ public class Bait extends Item{
 
 	@Override
 	public String getInfo() {
-		return "This is a bait";
+		return "This is a bait which will reduce the run chance of the pokemon by: " + reducedRunChance + ", but will slightly decrease the capture chance.";
 	}
 
 	@Override
 	public boolean useItem(Object object) {
 		if (checkItemUsable(object)){
+			((Pokemon) object).decrementAlteredCapRate(reducedCaptureRate);
+			((Pokemon) object).decrementAlteredRunChance(reducedRunChance);;
 			this.decrement(1);
 			// take effect on the pokemon
 			return true;
@@ -51,4 +53,5 @@ public class Bait extends Item{
 	public String getEffectMessage() {
 		return "FOCUS AND STEADY";
 	}
+
 }

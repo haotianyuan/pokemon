@@ -2,9 +2,12 @@ package Mission;
 
 import java.io.Serializable;
 
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+
 import Trainer.Trainer;
 
-public class Mission implements Serializable{
+public class Mission implements TableModel, Serializable{
 
 	private static final long serialVersionUID = 5722314330503884060L;
 	
@@ -13,7 +16,11 @@ public class Mission implements Serializable{
 	private final int epicRequirement;
 	private final int totalRequirement;
 	private final int legendRequirement;
+	private final int commonRequirement;
+	private final int uncommonRequirement;
+	private final int rareRequirement;
 	private final MissionType type;
+	private Trainer curTrainer;
 	
 	
 	// constructor
@@ -23,6 +30,9 @@ public class Mission implements Serializable{
 		if (mission == MissionType.STANDARDLADDER){
 			this.stepCap = 99999;
 			this.initBall = 100;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 0;
 			this.legendRequirement = 0;
@@ -30,6 +40,9 @@ public class Mission implements Serializable{
 		else if (mission == MissionType.TWENTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 20;
 			this.legendRequirement = 0;
@@ -37,6 +50,9 @@ public class Mission implements Serializable{
 		else if (mission == MissionType.THIRTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 30;
 			this.legendRequirement = 0;
@@ -44,6 +60,9 @@ public class Mission implements Serializable{
 		else if (mission == MissionType.FIFTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 50;
 			this.legendRequirement = 0;
@@ -51,6 +70,9 @@ public class Mission implements Serializable{
 		else if (mission == MissionType.FIVEEPIC){
 			this.stepCap = 500;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 5;
 			this.totalRequirement = 0;
 			this.legendRequirement = 0;
@@ -58,6 +80,9 @@ public class Mission implements Serializable{
 		else if (mission == MissionType.FINDLENGEND){
 			this.stepCap = 500;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 0;
 			this.legendRequirement = 1;
@@ -65,10 +90,17 @@ public class Mission implements Serializable{
 		else{
 			this.stepCap = 25;
 			this.initBall = 30;
+			this.commonRequirement = 0;
+			this.uncommonRequirement = 0;
+			this.rareRequirement = 0;
 			this.epicRequirement = 0;
 			this.totalRequirement = 15;
 			this.legendRequirement = 0;
 		}
+	}
+	
+	public void setTrainer(Trainer trainer){
+		curTrainer = trainer;
 	}
 	
 	public int getStepCap(){
@@ -148,5 +180,114 @@ public class Mission implements Serializable{
 				return false;
 			}
 		}
+	}
+
+	@Override
+	public void addTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Class<?> getColumnClass(int columnIndex) {
+		return String.class;
+	}
+
+	@Override
+	public int getColumnCount() {
+
+		return 2;
+	}
+
+	@Override
+	public String getColumnName(int col) {
+		if (col == 0){
+			return "Requirement";
+		}
+		
+		if (col == 1){
+			return "Progressing";
+		}
+
+		return null;
+	}
+
+	@Override
+	public int getRowCount() {
+		// TODO Auto-generated method stub
+		return 7;
+	}
+
+	@Override
+	public Object getValueAt(int row, int col) {
+		if (row == 0 && col == 0){
+			return "Step Limit";
+		}
+		if (row == 0 && col == 1){
+			return curTrainer.getStepCount() + " / " + this.getStepCap();
+		}
+		
+		if (row == 1 && col == 0){
+			return "Common Requirement";
+		}
+		if (row == 1 && col == 1){
+			return curTrainer.getPokemonCollection().getCommonNum() + " / " + this.commonRequirement;
+		}
+		
+		if (row == 2 && col == 0){
+			return "Uncommon Requirement";
+		}
+		if (row == 2 && col == 1){
+			return curTrainer.getPokemonCollection().getUncommonNum() + " / " + this.uncommonRequirement;
+		}
+		
+		if (row == 3 && col == 0){
+			return "Rare Requirement";
+		}
+		if (row == 3 && col == 1){
+			return curTrainer.getPokemonCollection().getRareNum() + " / " + this.rareRequirement;
+		}
+		
+		if (row == 4 && col == 0){
+			return "Rare Requirement";
+		}
+		if (row == 4 && col == 1){
+			return curTrainer.getPokemonCollection().getEpicNum() + " / " + this.epicRequirement;
+		}
+		
+		if (row == 5 && col == 0){
+			return "Rare Requirement";
+		}
+		if (row == 5 && col == 1){
+			return curTrainer.getPokemonCollection().getLegendNum() + " / " + this.legendRequirement;
+		}
+		
+		if (row == 6 && col == 0){
+			return "Rare Requirement";
+		}
+		if (row == 6 && col == 1){
+			return curTrainer.getPokemonCollection().getSize() + " / " + this.totalRequirement;
+		}
+		
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void removeTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		
 	}
 }
