@@ -10,7 +10,7 @@ public class Mission implements Serializable{
 	
 	private int stepCap;
 	private final int initBall;
-	private final int rareRequirement;
+	private final int epicRequirement;
 	private final int totalRequirement;
 	private final int legendRequirement;
 	private final MissionType type;
@@ -21,51 +21,51 @@ public class Mission implements Serializable{
 		this.type = mission;
 		// record when 500 step down
 		if (mission == MissionType.STANDARDLADDER){
-			this.stepCap = 25;
-			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.stepCap = 99999;
+			this.initBall = 100;
+			this.epicRequirement = 0;
 			this.totalRequirement = 0;
 			this.legendRequirement = 0;
 		}
 		else if (mission == MissionType.TWENTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.epicRequirement = 0;
 			this.totalRequirement = 20;
 			this.legendRequirement = 0;
 		}
 		else if (mission == MissionType.THIRTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.epicRequirement = 0;
 			this.totalRequirement = 30;
 			this.legendRequirement = 0;
 		}
 		else if (mission == MissionType.FIFTYPOKEMON){
 			this.stepCap = 500;
 			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.epicRequirement = 0;
 			this.totalRequirement = 50;
 			this.legendRequirement = 0;
 		}
-		else if (mission == MissionType.FIVERARE){
+		else if (mission == MissionType.FIVEEPIC){
 			this.stepCap = 500;
 			this.initBall = 30;
-			this.rareRequirement = 5;
+			this.epicRequirement = 5;
 			this.totalRequirement = 0;
 			this.legendRequirement = 0;
 		}
 		else if (mission == MissionType.FINDLENGEND){
 			this.stepCap = 500;
 			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.epicRequirement = 0;
 			this.totalRequirement = 0;
 			this.legendRequirement = 1;
 		}
 		else{
-			this.stepCap = 500;
+			this.stepCap = 25;
 			this.initBall = 30;
-			this.rareRequirement = 0;
+			this.epicRequirement = 0;
 			this.totalRequirement = 15;
 			this.legendRequirement = 0;
 		}
@@ -84,7 +84,7 @@ public class Mission implements Serializable{
 	}
 	
 	public int getRareRequirement(){
-		return this.rareRequirement;
+		return this.epicRequirement;
 	}
 	
 	public int getTotalRequirement(){

@@ -869,6 +869,7 @@ public class MainGameView extends JPanel implements Observer{
 	
 	public void playMainGameBackgroundMusic() {
 	    try {
+	    	stopPlayCurSound();
 	    	String soundtrackFolder = "soundtrack" + File.separator;
 	    	FileInputStream fis = new FileInputStream(soundtrackFolder + curBackMusicFileName);
 	    	BufferedInputStream bis = new BufferedInputStream(fis);
@@ -919,7 +920,7 @@ public class MainGameView extends JPanel implements Observer{
 
 	public void startGeneralTimer() {
 		generalCounter = 0;
-		generalTimer = new Timer(delayInMillis * 5, new generalTimerListener());
+		generalTimer = new Timer(delayInMillis * 50, new generalTimerListener());
 		generalTimer.start();
 	}
 	
@@ -932,20 +933,14 @@ public class MainGameView extends JPanel implements Observer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// reset the counter when go beyond 50
-			if (generalCounter > 910 && curBackMusicFileName.equals("route_101.mp3")){
+			if (generalCounter == 0){
 				playMainGameBackgroundMusic();
-				generalCounter  = 0;
+			}	
+			else if (MyAudioPlayer.getStatus()  == 2 && curBackMusicFileName.equals("route_101.mp3")){
+				playMainGameBackgroundMusic();
 				
 			}		
-			else if (generalCounter == 0){
-				playMainGameBackgroundMusic();
-			}
-			
-			//if (backgroundPlayer.)
-			generalCounter ++;
-			if (MyAudioPlayer.getStatus() != 0){
-				System.out.println(MyAudioPlayer.getStatus());
-			}		
+			generalCounter++;
 		}
 	}	
 }

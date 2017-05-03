@@ -38,8 +38,8 @@ public class GameModel extends Observable implements Serializable{
 	private boolean teleporting = false;
 	
 	// battle information
-	private WildPokemonGenerator wildPokemonGenerator;
-	private boolean encounteredThisBlock;	// flag to check if just encounter a pokemon before move
+	private WildPokemonGenerator wildPokemonGenerator = WildPokemonGenerator.getInstance();
+	private boolean encounteredThisBlock = false;	// flag to check if just encounter a pokemon before move
 	
 	// game information
 	private Mission mission;
@@ -50,8 +50,6 @@ public class GameModel extends Observable implements Serializable{
 	
 	public GameModel(){
 		initiateMap();
-		wildPokemonGenerator = WildPokemonGenerator.getInstance();
-		encounteredThisBlock = false;
 		curTrainer = new Trainer("T.M.T.");
 		setLocation(22, 31);
 		xPrevCoords = 22;

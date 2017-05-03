@@ -2,6 +2,8 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +28,7 @@ import java.io.ObjectOutputStream;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -36,6 +39,7 @@ import javax.swing.RowSorter;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
@@ -44,6 +48,7 @@ import javax.swing.table.TableRowSorter;
 import GameModel.Direction;
 import GameModel.GameModel;
 import Inventory.ItemType;
+import Mission.Difficulty;
 import Mission.Mission;
 import Mission.MissionType;
 import javazoom.jl.decoder.JavaLayerException;
@@ -65,12 +70,13 @@ public class RunPokemon extends JFrame {
 	
 	private JButton useItemButton;
 	private JButton trainerInfoButton;
-	private JButton bagInfoButton;
+	private JButton inventoryButton;
 	private JButton pokedexButton;
 	
 	
 	// declare the main game view
 	private JPanel currentView;
+	private MissionType SelectedMissionType;
 	
 	private final static int View_OFFSET_X = 25; 
 	private final static int View_OFFSET_Y = 25; 
@@ -118,6 +124,8 @@ public class RunPokemon extends JFrame {
 		// if the user choose no, use default
 		else if (userPrompt == JOptionPane.NO_OPTION) {
 			gameModel = new GameModel();
+			setUpMission();
+			/*
 			Object[] options = {"25 Steps", "50 steps 5 pokemon"};
 			userPrompt = JOptionPane.showOptionDialog(null, "Press Yes for 50 step limit 5 pokemon caught to win, no for 25 step to win",
 													"Choose Mission",     
@@ -132,6 +140,7 @@ public class RunPokemon extends JFrame {
 			else{
 				gameModel.setMission(new Mission(MissionType.TEST));
 			}
+			*/
 		}
 		// chosen cancel
 		else {
@@ -157,7 +166,7 @@ public class RunPokemon extends JFrame {
 				addEventListener();
 				setUpInfoBoard();
 				setUpMissionBoard();
-				setUpInventory();
+				setUpInventoryTable();
 				setUpPokemonTable();
 				setUpButtons();
 
@@ -178,16 +187,109 @@ public class RunPokemon extends JFrame {
 		validate();
 	}
 	
-	// user prompt to choose mission
-	private void setUpMission(){
-		// TODO: mission
+	/***************** Mission Selector *******************/
+	private final void setUpMission(){		
+		JDialog dialog = new JDialog(this, "Mission Selector", true);
+		JPanel MissionSelector = new JPanel(new BorderLayout());
+		MissionSelector.setLayout(new BorderLayout());
+		MissionSelector.setBorder(new EmptyBorder(10, 10, 10, 10));
+		MissionSelector.add(new JLabel("Please Select a Mission to Start. You Can Move Mouse Over the Button To See Details"), BorderLayout.NORTH);
+		
+		JPanel buttonPanel_0 = new JPanel(new FlowLayout());
+		
+		// Define button for choose mission
+		JButton m0 = new JButton(Difficulty.TEST.name());
+		m0.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.TEST;
+						dialog.setVisible(false);
+					}
+				});
+		
+		JButton m1 = new JButton(Difficulty.CASUAL.name());
+		m1.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.STANDARDLADDER;
+						dialog.setVisible(false);
+					}
+				});
+		
+		JButton m2 = new JButton(Difficulty.EASY.name());
+		m2.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.TWENTYPOKEMON;
+						dialog.setVisible(false);
+					}
+				});
+		
+		JButton m3 = new JButton(Difficulty.NORMAL.name());
+		m3.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.THIRTYPOKEMON;
+						dialog.setVisible(false);
+					}
+				});
+		
+		buttonPanel_0.add(m0);
+		buttonPanel_0.add(m1);
+		buttonPanel_0.add(m2);
+		buttonPanel_0.add(m3);
+					
+		// second line of button
+		JPanel buttonPanel_1 = new JPanel(new FlowLayout());
+		
+		JButton m4 = new JButton(Difficulty.HARD.name());
+		m4.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.FIFTYPOKEMON;
+						dialog.setVisible(false);
+					}
+				});
+		
+		JButton m5 = new JButton(Difficulty.VERYHARD.name());
+		m5.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.FIVEEPIC;
+						dialog.setVisible(false);
+					}
+				});
+		
+		JButton m6 = new JButton(Difficulty.HELL.name());
+		m6.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						SelectedMissionType = MissionType.STANDARDLADDER;
+						dialog.setVisible(false);
+					}
+				});
+		
+		buttonPanel_1.add(m4);
+		buttonPanel_1.add(m5);
+		buttonPanel_1.add(m6);
+
+		
+		MissionSelector.add(buttonPanel_0, BorderLayout.CENTER);
+		MissionSelector.add(buttonPanel_1, BorderLayout.SOUTH);
+	
+		
+		dialog.setContentPane(MissionSelector);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+        gameModel.setMission(new Mission(SelectedMissionType));
 	}
 	
 	/********************* Add Component Into Pane ***********************/
 	
 	public void setUpMainWindow(){
 		// define the location of the main window
-		this.setTitle("Pokemon Safari Zone - Alpha v0.5");
+		this.setTitle("Pokemon Safari Zone - Beta v0.9");
 		this.setSize(DefaultHeight, DefaultWidth);
 		this.setLocationRelativeTo(null); 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -252,7 +354,7 @@ public class RunPokemon extends JFrame {
 	}
 	
 	// show the inventory table
-	public JScrollPane setUpInventory(){
+	public JScrollPane setUpInventoryTable(){
 		inventoryTable = new JTable(gameModel.getTrainer().getInventory());
 		RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(gameModel.getTrainer().getInventory());
 		inventoryTable.setRowSorter(sorter);
@@ -275,7 +377,7 @@ public class RunPokemon extends JFrame {
 	public void setUpButtons(){
 		setUpUseItemButton();
 		setUpTrainerInfoButton();
-		setUpBagInfoButton();
+		setUpInventoryButton();
 		setUpPokedexButton();
 	}
 	
@@ -296,24 +398,24 @@ public class RunPokemon extends JFrame {
 		trainerInfoButton.setBounds(25, 420, Trainer_Info_Width, Trainer_Info_Height);
 		trainerInfoButton.setOpaque(false);
 		trainerInfoButton.setContentAreaFilled(false);
-		
 		trainerInfoButton.setBorderPainted(false);
 		trainerInfoButton.setFocusPainted(false);
 		getContentPane().add(trainerInfoButton);
 	}
 		
 	// add user info button
-	public void setUpBagInfoButton(){
+	public void setUpInventoryButton(){
 		// get the info icon image
 		ImageIcon icon = new ImageIcon(getBagInfoIcon());
-		bagInfoButton = new JButton(icon);
-		bagInfoButton.setBounds(150, 420, Bag_Info_Width, Bag_Info_Height);
-		bagInfoButton.setOpaque(false);
-		bagInfoButton.setContentAreaFilled(false);
+		inventoryButton = new JButton(icon);
+		inventoryButton.setBounds(150, 420, Bag_Info_Width, Bag_Info_Height);
+		inventoryButton.setOpaque(false);
+		inventoryButton.setContentAreaFilled(false);
 		
-		bagInfoButton.setBorderPainted(false);
-		bagInfoButton.setFocusPainted(false);
-		getContentPane().add(bagInfoButton);
+		inventoryButton.setBorderPainted(false);
+		inventoryButton.setFocusPainted(false);
+		inventoryButton.addActionListener(new checkInventoryButtonListener());
+		getContentPane().add(inventoryButton);
 	}
 	
 	// add pokemon info button
@@ -449,7 +551,7 @@ public class RunPokemon extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if (!battlePanel.InteractEnable()){
+			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
 				return;
 			}
 			Object obj = ((JButton) e.getSource());
@@ -477,11 +579,23 @@ public class RunPokemon extends JFrame {
 	}
 	
 	// add the button listener for the item detail button
-	private class checkItemButtonListener implements ActionListener {
+	private class checkInventoryButtonListener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
+			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
+				return;
+			}
+			Object obj = ((JButton) e.getSource());
+			if (obj == inventoryButton && currentView.getClass() == MainGameView.class){
+			    JFrame frame = new JFrame();
+			    frame.setLayout(new BorderLayout());
+			    JScrollPane newPane = setUpInventoryTable();
+			    frame.add(newPane);
+			    frame.pack();
+			    frame.setLocationRelativeTo(null);
+			    frame.setVisible(true);
+			}
 			
 		}
 		
@@ -629,23 +743,25 @@ public class RunPokemon extends JFrame {
 		public void componentHidden(ComponentEvent e) {
 			if (e.getComponent().getClass() == BattleView.class){
 				battlePanel.stopAllSoundTrack();
-				setViewTo(mainGamePanel);
 				mainGamePanel.startGeneralTimer();
+				setViewTo(mainGamePanel);
 			}
 			else if (e.getComponent().getClass() == MainGameView.class){
 				// save the game before going into battle
 				saveData();
 				mainGamePanel.stopPlayCurSound();
+				// start general timer
+				battlePanel.startGeneralTimer();
 				battlePanel.startBattle();
 				setViewTo(battlePanel);
 			}
 			else{
 				// TODO: 
 			}
-			inventoryTable.requestFocus();
+			//inventoryTable.requestFocus();
 			inventoryTable.repaint();
 			
-			pokemonTable.requestFocus();
+			//pokemonTable.requestFocus();
 			pokemonTable.repaint();
 		}
 
@@ -811,6 +927,14 @@ public class RunPokemon extends JFrame {
 				Pokedex_Width, Pokedex_Height);
 	}	
 	
+	
+	/*
+	 * *************************************** *
+	 *  	  Dialog/OptionPanel Below         *
+	 * *************************************** *
+	 */
+	
+
 	
 }
 

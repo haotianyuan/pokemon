@@ -33,8 +33,8 @@ import Inventory.*;
 import Map.GroundType;
 import Pokemon.Pokedex;
 import Pokemon.Pokemon;
-import javazoom.jl.player.Player;
-import javazoom.jlgui.basicplayer.BasicPlayerEvent;
+import javazoom.jlgui.basicplayer.BasicPlayer;
+import javazoom.jlgui.basicplayer.BasicPlayerException;
 
 public class BattleView extends JPanel implements Observer{
 	
@@ -110,10 +110,6 @@ public class BattleView extends JPanel implements Observer{
 			if (!openingStarted){
 				
 				initData();
-				
-				// start general timer
-				startGeneralTimer();
-				//playBackgroundMusic(BattleMusicFileName);
 				playOpeningAnimation();
 			}
 			
@@ -1137,6 +1133,9 @@ public class BattleView extends JPanel implements Observer{
 	private void startItemFlyTimer() {
 		itemFlyCounter = 0;
 		itemFlyTimer = new Timer(delayInMillis * 4, new itemFlyTimerListener());
+		if (usingItemClass == SafariBall.class){
+			this.playEffectSound(UltimateSoundEffectFileName);
+		}
 		itemFlyTimer.start();
 	}
 	
@@ -1397,8 +1396,9 @@ public class BattleView extends JPanel implements Observer{
 		caughtEnd = false;
 		
 		stopPlayBackgroundSound();
-		backgroundPlayer = null;
 		playEffectSound(CatchMusicFileName);
+		
+		playBackgroundMusic(VictoryMusicFileName);
 		caughtTimer.start();
 		callEndOptionPane();
 		
@@ -1425,14 +1425,9 @@ public class BattleView extends JPanel implements Observer{
 				
 			}
 			*/
-
-				// wait the catch effect sound end
-				if (caughtCounter >= 1 && backgroundPlayer == null){
-					//generalCounter = 0;
-					playBackgroundMusic(VictoryMusicFileName);
-				}
-				repaint();
-				caughtCounter++;		
+			repaint();
+			caughtCounter++;
+		
 
 		}
 	}	
@@ -1442,7 +1437,7 @@ public class BattleView extends JPanel implements Observer{
 	private Timer generalTimer;
 	private int generalCounter;
 
-	private void startGeneralTimer() {
+	protected void startGeneralTimer() {
 		generalCounter = 0;
 		generalTimer = new Timer(delayInMillis * 10, new generalTimerListener());
 		generalTimer.start();
@@ -1453,15 +1448,7 @@ public class BattleView extends JPanel implements Observer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// reset the counter when go beyond 50
-			if (generalCounter > 1150 && curBackgroundMusicFileName.equals(BattleMusicFileName)){
-				playBackgroundMusic(BattleMusicFileName);
-				generalCounter = 0;
-			}		
-			else if (generalCounter > 450 && curBackgroundMusicFileName.equals(VictoryMusicFileName)){
-				playBackgroundMusic(VictoryMusicFileName);
-				generalCounter = 0;
-			}
-			else if (generalCounter == 0){
+			if (generalCounter == 0){
 				if (isCaught){
 					playBackgroundMusic(VictoryMusicFileName);
 				}
@@ -1469,6 +1456,13 @@ public class BattleView extends JPanel implements Observer{
 					playBackgroundMusic(BattleMusicFileName);
 				}
 			}
+			else if (curBackgroundPlayer.getStatus() == 2 && !isCaught){
+				playBackgroundMusic(BattleMusicFileName);
+			}		
+			else if (curBackgroundPlayer.getStatus() == 2 && isCaught){
+				playBackgroundMusic(VictoryMusicFileName);
+			}
+
 			
 			if (InteractEnable()){
 				repaint();
@@ -1723,92 +1717,121 @@ public class BattleView extends JPanel implements Observer{
 	private final static String SoundTrackFolder = "soundtrack" + File.separator;
 	
 	////////////////// Background Sound /////////////////
-	private static String curBackgroundMusicFileName;
+	private static String curBackgroundMusicFileName = "battle_wild_01.mp3";
 	
 	private static String BattleMusicFileName = "battle_wild_01.mp3";
 	private static String VictoryMusicFileName = "victory.mp3";
-	private Player backgroundPlayer;
+	private BasicPlayer curBackgroundPlayer;
+	//private FileInputStream fis_BackgroundMusic;
+	//private BufferedInputStream bis_BackgroundMusic;
 	private Thread backgroundThread;
 			
 	private void playBackgroundMusic(String fileName) {
 	    try {
 			stopPlayBackgroundSound();
 			curBackgroundMusicFileName = fileName;
-	    	FileInputStream fis = new FileInputStream(SoundTrackFolder + fileName);
-	    	BufferedInputStream bis = new BufferedInputStream(fis);
-	    	backgroundPlayer = new Player(bis);
+	    	File fis = new File(SoundTrackFolder + fileName);
+	    	//BufferedInputStream bis = new BufferedInputStream(fis);
+	    	curBackgroundPlayer = new BasicPlayer();
+	    	curBackgroundPlayer.open(fis);
+	    	curBackgroundPlayer.setGain(0.1);
 	    } 
 	    catch (Exception e) {
-	        System.err.printf("%s\n", e.getMessage());
+	    	e.printStackTrace();
+			//System.err.printf("1. cannot open: " + fileName, e.getMessage());
 	    }
-
+	    
+	    
 	    backgroundThread = new Thread() {
 	    	@Override
 	    	public void run() {
 	    		try {
-	    			backgroundPlayer.play();
+	    			curBackgroundPlayer.play();
 	    		} 
 	    		catch (Exception e) {
-	    			System.err.printf("%s\n", e.getMessage());
+	    			System.err.printf("2. cannot open: " + fileName, e.getMessage());
 	    		}
 	    	}
 	    };
 	    
 	    backgroundThread.start();
+	    
 	}
 	
 	private void stopPlayBackgroundSound(){
-		if (backgroundPlayer != null) {
-			backgroundPlayer.close();
+		if (curBackgroundPlayer != null) {
+			try {
+				curBackgroundPlayer.stop();
+			}
+			catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		
 		
 		if (backgroundThread != null){
 			backgroundThread.interrupt();
 		}
+		
 	}
 	
 	////////////////// Vcitory Sound /////////////////
 	private final static String CatchMusicFileName = "catch.mp3";
-	private final static String BaitSoundEffectFileName = "Bait_Effect.mp3";
-	private final static String RockSoundEffectFileName = "Rock_Effect.mp3";
-	private Player effectPlayer;
+	private final static String BaitSoundEffectFileName = "Bait_Effect.wav";
+	private final static String RockSoundEffectFileName = "Rock_Effect.wav";
+	private final static String UltimateSoundEffectFileName = "Ultimate.mp3";
+	private BasicPlayer curEffectPlayer;
 	private Thread effectThread;
 	
 	
 	private void playEffectSound(String fileName) {
 	    try {
 	    	stopPlayEffectSound();
-	    	FileInputStream fis = new FileInputStream(SoundTrackFolder + fileName);
-	    	BufferedInputStream bis = new BufferedInputStream(fis);
-	    	effectPlayer = new Player(bis);
+	    	File fis = new File(SoundTrackFolder + fileName);
+	    	//BufferedInputStream bis = new BufferedInputStream(fis);
+	    	curEffectPlayer = new BasicPlayer();
+	    	curEffectPlayer.open(fis);
+	    	curEffectPlayer.setGain(1);
+		    //effectPlayer.play();
 	    } 
 	    catch (Exception e) {
-	        System.err.printf("%s\n", e.getMessage());
+	    	e.printStackTrace();
+	        //System.err.printf("1. cannot open: " + fileName, e.getMessage());
 	    }
 
+	    
 	    effectThread = new Thread() {
 	    	@Override
 	    	public void run() {
 	    		try {
-	    			effectPlayer.play();
+	    			curEffectPlayer.play();
 	    		} 
 	    		catch (Exception e) {
-	    			System.err.printf("%s\n", e.getMessage());
+	    			System.err.printf("2. cannot open: " + fileName, e.getMessage());
 	    		}
 	    	}
 	    };
 	    
 	    effectThread.start();
+	    
 	}
 	
 	private void stopPlayEffectSound(){
-		if (effectPlayer != null) {
-			effectPlayer.close();
-		}
-		
 		if (effectThread != null){
 			effectThread.interrupt();
 		}
+		
+		if (curEffectPlayer != null) {
+			try {
+				curEffectPlayer.stop();
+			} 
+			catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	
 	
@@ -1823,6 +1846,7 @@ public class BattleView extends JPanel implements Observer{
 	JOptionPane endGameOptionPane = new JOptionPane();
 	
 	private void callEndOptionPane(){
+		endGameOptionPaneStarted = true;
 		String newName = endGameOptionPane.showInputDialog("Do you want a new name for it?");
 		if (newName == null){
 			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
@@ -1834,6 +1858,7 @@ public class BattleView extends JPanel implements Observer{
 			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
 			
 		}
+		endGameOptionPaneStarted = false;
 		//System.out.println("" + gameModel.getTrainer().getPokemonCollection().getSize());
 		
 		// end the battle
