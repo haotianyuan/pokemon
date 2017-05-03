@@ -7,10 +7,10 @@ public class Rock extends Item{
 
 	private static final long serialVersionUID = -4794400599819801264L;
 
-	private double reducedCurHpAmount;
+	private double reducedRate = 0.08;
 	
 	// extra
-	private double reducedRunChance;
+	//private double reducedRunChance;
 	
 
 
@@ -21,12 +21,14 @@ public class Rock extends Item{
 
 	@Override
 	public String getInfo() {
-		return "This is a rock";
+		return  "A rock that seems to be really hurt if hit by it.";
 	}
 
 	@Override
 	public boolean useItem(Object object) {
 		if (checkItemUsable(object)){
+			int reduced = (int) (((Pokemon) object).getMaxHP() * reducedRate);
+			((Pokemon) object).decrementHP(reduced);
 			this.decrement(1);
 			return true;
 		}
@@ -47,9 +49,8 @@ public class Rock extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getEffectMessage() {
+		return "WEAKENED AND FEAR";
 	}
 
 }

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+
 /*
  * Author: Mengtao Tang
  * Date: 4/20/2017
@@ -34,7 +37,10 @@ import java.util.Random;
  */
 
 
-public abstract class Pokemon implements Serializable{
+public abstract class Pokemon implements TableModel, Serializable{
+
+	private static final long serialVersionUID = 1847973297212434777L;
+	
 	// fixed data for the pokemon
 	private final LocalDateTime metDate;
 	private final Pokedex pokemonSpecy;
@@ -50,8 +56,8 @@ public abstract class Pokemon implements Serializable{
 	private String nickName;
 	private int curHP;
 	
-	//private double curCapRate;
-	//private double curRunChance;
+	private double increasedCapRate;
+	private double reducedRunChance;
 	
 	private int capHpLimit;	// the maximum hp allowed to be captured
 	//private int curMaxTurn;	// individual max turn
@@ -65,7 +71,7 @@ public abstract class Pokemon implements Serializable{
 		this.quality = specy.getQuality();
 		this.randomSeed = specy.getIndex();
 		
-		this.name = name;
+		this.name = specy.getName();
 		this.nickName = name;
 		
 		// randomly generate hp
@@ -74,11 +80,11 @@ public abstract class Pokemon implements Serializable{
 		
 		// randomly generate capture rate
 		this.basicCapRate = randomCapRate(specy.getQuality().getCapRate());
-		//this.curCapRate = this.basicCapRate;
+		this.increasedCapRate = 0;
 		
 		// randomly generate run chance
 		this.basicRunChance = randomRunChance(specy.getQuality().getRunChance());
-		//this.curRunChance = this.basicRunChance;
+		this.reducedRunChance = 0;
 		
 		// randomly generate the maximum hp that allowed to be captured
 		this.capHpLimit = randomCapHP(this.maxHP);
@@ -104,7 +110,7 @@ public abstract class Pokemon implements Serializable{
 	// TODO: need a algorithm to randomly set up the capture 
 	//		rate basing on the basic capture rate
 	private double randomCapRate(double originCapRate){
-		return (double)originCapRate;
+		return originCapRate * ((Math.random() - 0.5) * 0.075 + 1 );
 	}
 	
 	
@@ -112,13 +118,13 @@ public abstract class Pokemon implements Serializable{
 	// 		run chance should be reversely propagate to the
 	//		capture rate
 	private double randomRunChance(double originRunChance){
-		return originRunChance;
+		return originRunChance * ((Math.random() - 0.5) * 0.075 + 1 );
 	}
 	
 	// TODO: need a algorithm to randomly set up the max hp for
 	//		capture
 	private int randomCapHP(int maxHP){
-		return (int)(0.5 * maxHP);
+		return (int)(0.2 * maxHP);
 	}
 	
 	// getter for the parameter
@@ -186,48 +192,47 @@ public abstract class Pokemon implements Serializable{
 		}
 	}
 	
-	/**************** No longer using this algorithm *******************/
-	/*
-		public double getCurCapRate(){
-		return this.curCapRate;
+
+	public double getCurCapRate(){
+		return basicCapRate * (1 + increasedCapRate);
 	}
 	
 	public double getCurRunChance(){
-		return this.curRunChance;
+		return basicRunChance * (1 - reducedRunChance);
+	}
+		
+	public void incrementAlteredCapRate(double incre){
+		this.increasedCapRate *= (1 + incre);
+		if(this.increasedCapRate > 1){
+			this.increasedCapRate = 1.0;
+		}
 	}
 	
+	public void decrementAlteredCapRate(double decre){
+		this.increasedCapRate *= (1 - decre);
+		if(this.increasedCapRate < 0){
+			this.increasedCapRate = 0;
+		}
+	}
+	
+	public void incrementAlteredRunChance(double incre){
+		this.reducedRunChance *= 1 + incre;
+		if (this.reducedRunChance > 1){
+			this.reducedRunChance = 1;
+		}
+	}
+	
+	public void decrementAlteredRunChance(double decre){
+		this.reducedRunChance *= 1 - decre;
+		if (this.reducedRunChance < 0){
+			this.reducedRunChance = 0;
+		}
+	}
+	
+	/*
 	public int getCurMaxTurn()	{
 		return this.curMaxTurn;
 	}
-	
-	public void incrementCapRate(double incre){
-		this.curCapRate *= 1 + incre;
-		if(this.curCapRate > 1){
-			this.curCapRate = 1.0;
-		}
-	}
-	
-	public void decrementCapRate(double decre){
-		this.curCapRate *= 1 - decre;
-		if(this.curCapRate < 0){
-			this.curCapRate = 0;
-		}
-	}
-	
-	public void incrementRunChance(double incre){
-		this.curRunChance *= 1 + incre;
-		if (this.curRunChance > 1){
-			this.curRunChance = 1;
-		}
-	}
-	
-	public void decrementRunChance(double decre){
-		this.curRunChance *= 1 - decre;
-		if (this.curRunChance < 0){
-			this.curRunChance = 0;
-		}
-	}
-	
 	
 	public void incrementMaxTurn(int incre){
 		this.curMaxTurn += incre;
@@ -240,6 +245,7 @@ public abstract class Pokemon implements Serializable{
 		}
 	}
 	*/
+
 		
 	public void recordCapTurn(int turn){
 		this.captureTurn = turn;
@@ -248,5 +254,152 @@ public abstract class Pokemon implements Serializable{
 	public String getNickName(){
 		return this.nickName;
 	}
+	
+	
+	
+	@Override
+	public void addTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Class<?> getColumnClass(int col) {
+		return String.class;
+	}
+
+	@Override
+	public int getColumnCount() {
+		return 2;
+	}
+
+	@Override
+	public String getColumnName(int col) {
+		if (col == 0){
+			return "Name";
+		}
+		
+		if (col == 1){
+			return "Value";
+		}
+		
+		return null;
+	}
+
+	@Override
+	public int getRowCount() {
+		// TODO Auto-generated method stub
+		return 13;
+	}
+
+	@Override
+	public Object getValueAt(int row, int col) {
+		if (row == 0 && col == 0){
+			return "Specy";
+		}
+		if (row == 0 && col == 1){
+			return this.getSpecy().getName();
+		}
+		
+		if (row == 1 && col == 0){
+			return "Nickname";
+		}
+		if (row == 1 && col == 1){
+			return this.getNickName();
+		}
+		
+		if (row == 2 && col == 0){
+			return "Meet Date";
+		}
+		if (row == 2 && col == 1){
+			return this.recordMetDate();
+		}
+		
+		if (row == 3 && col == 0){
+			return "Current HP";
+		}
+		if (row == 3 && col == 1){
+			return this.getCurHP();
+		}
+		
+		if (row == 4 && col == 0){
+			return "Max HP";
+		}
+		if (row == 4 && col == 1){
+			return this.getMaxHP();
+		}
+		
+		if (row == 5 && col == 0){
+			return "Quality";
+		}
+		if (row == 5 && col == 1){
+			return this.getSpecy().getQuality();
+		}
+		
+		if (row == 6 && col == 0){
+			return "Basic Capture Chance";
+		}
+		if (row == 6 && col == 1){
+			return this.getBasicCapRate() * 100 + "%";
+		}
+		
+		if (row == 7 && col == 0){
+			return "Basic Run Chance";
+		}
+		if (row == 7 && col == 1){
+			return this.getBasicRunChance() * 100 + "%";
+		}
+		
+		if (row == 8 && col == 0){
+			return "Max Turn Before Run";
+		}
+		if (row == 8 && col == 1){
+			return this.getBasicMaxTurn();
+		}
+		
+		if (row == 9 && col == 0){
+			return "Current Capture Chance";
+		}
+		if (row == 9 && col == 1){
+			return this.getCurCapRate() * 100 + "%";
+		}
+		
+		if (row == 10 && col == 0){
+			return "Current Run Chance";
+		}
+		if (row == 10 && col == 1){
+			return this.getCurRunChance() * 100 + "%";
+		}
+		
+		if (row == 11 && col == 0){
+			return "Turn Used";
+		}
+		if (row == 11 && col == 1){
+			return this.getCapTurn();
+		}
+		
+		return null;
+	}
+
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void removeTableModelListener(TableModelListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public abstract String getIntro();
+	
 	
 }

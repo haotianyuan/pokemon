@@ -11,6 +11,7 @@ public class CapturePotion extends Item{
 
 	public CapturePotion(String name, double alterChance, ItemType type) {
 		super(name, type);
+		this.alteredChance = alterChance;
 	}
 
 	@Override
@@ -38,11 +39,11 @@ public class CapturePotion extends Item{
 
 	@Override
 	public String getInfo() {
-		return "Permanently increase the chance of capture by " + this.alteredChance * 100 + "%";
+		return "This capture potion will permanently increase the chance of capture by " + this.alteredChance * 100 + "%";
 	}
 
 	@Override
-	public String getUsageMessage() {
+	public String getEffectMessage() {
 		return "You drink a Capture Poition";
 	}
 

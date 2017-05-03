@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,14 +12,19 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.imageio.ImageIO;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -27,6 +33,8 @@ import Inventory.*;
 import Map.GroundType;
 import Pokemon.Pokedex;
 import Pokemon.Pokemon;
+import javazoom.jlgui.basicplayer.BasicPlayer;
+import javazoom.jlgui.basicplayer.BasicPlayerException;
 
 public class BattleView extends JPanel implements Observer{
 	
@@ -63,6 +71,7 @@ public class BattleView extends JPanel implements Observer{
 	private int pokemonCurWidth;
 	private int pokemonCurHeight;
 	private Point pokemonUpperLeft = new Point();
+	private boolean isCaught = false;
 	
 	// location for item on the battlefield
 	private final static int ItemStartCenterLocation_X = 173;
@@ -72,12 +81,13 @@ public class BattleView extends JPanel implements Observer{
 	private Point itemUpperLeft = new Point();
 	private int itemCurWidth;
 	private int itemCurHeight;
-	
+		
 	// status and location for effect of the pokemon
 	private boolean isBaited = false;
 	private boolean isRocked = false;
 	
 	private Class<?> usingItemClass = null;
+	private Item dummyItem = null;
 		
 	
 	// constructor
@@ -98,6 +108,7 @@ public class BattleView extends JPanel implements Observer{
 			
 			// play opening animation
 			if (!openingStarted){
+				
 				initData();
 				playOpeningAnimation();
 			}
@@ -105,8 +116,15 @@ public class BattleView extends JPanel implements Observer{
 			// play use item animation
 			if(arg != null){
 				curTurn++;
+				// set pokemon turn count
+				gameModel.getTrainer().getCurEncounterPokemon().recordCapTurn(curTurn);
+				
 				// raise the item using flag				
 				usingItemClass = ((Item) arg).getClass();
+				
+				createDummyItem();
+				
+				// play the item animation
 				playItemAnimation();
 			}			
 			repaint();
@@ -131,6 +149,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	// this will be called in initiation
 	private void resetData(){
+		isCaught = false;
 		usingItemClass = null;	// reset the using item class
 		curTurn = 0;	// reset the turn count
 
@@ -148,11 +167,37 @@ public class BattleView extends JPanel implements Observer{
 		itemUpperLeft = new Point();
 	}
 	
+	// create a dummy item according to the item class
+	private void createDummyItem(){
+		// initiate the a new item with the class
+		try {
+			Constructor<?> cons = usingItemClass.getConstructors()[0];
+			dummyItem = (Item) cons.newInstance();
+			
+			//System.out.println("Item created");
+			//System.out.println("Item: " + dummyItem.getName());
+		} 
+		catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
+	
 	// initate Jlabel
 	private void initBattleInfoBoard(){
 		battleInfoBoard = new JLabel();
 		battleInfoBoard.setBounds(20, 241, 380, 59);
-		battleInfoBoard.setFont(new Font("Times New Roman", Font.BOLD, 16));
+		battleInfoBoard.setFont(new Font("Times New Roman", Font.BOLD, 12));
+		battleInfoBoard.setForeground(Color.white);
 		add(battleInfoBoard);
 	}
 	
@@ -162,21 +207,33 @@ public class BattleView extends JPanel implements Observer{
 	}
 	
 	public void startBattle(){
+		battleInfoBoard.setVisible(true);
 		battleEnd = false;
 		openingStarted = false;		
 	}
 	
 	private void endBattle(){
+		if (caughtTimer != null){
+			caughtTimer.stop();
+			
+			caughtEnd = true;
+			caughtStarted = false;
+			caughtCounter = 0;
+		}
+		
+		battleInfoBoard.setVisible(false);
 		battleEnd = true;
 		curPokemon = null;
 		gameModel.getTrainer().setCurEncounterPokemon(null);
 		gameModel.setEncounteredThisBlock(false);
 		generalTimer.stop();
 		generalCounter = 0;
+		this.stopAllSoundTrack();
+		
 	}
 	
 	public boolean InteractEnable(){
-		return openingEnd && itemUsingEnd && itemFlyEnd && itemEffectEnd && transEnd;
+		return openingEnd && itemUsingEnd && itemFlyEnd && itemEffectEnd && transEnd && caughtEnd;
 	}
 	
 	
@@ -193,6 +250,7 @@ public class BattleView extends JPanel implements Observer{
 		public void mouseClicked(MouseEvent e) {
 			int x = e.getX();
 			int y = e.getY();
+			
 			System.out.println("Click on: " + x + ", " + y);
 			
 			if (!battleEnd){
@@ -201,6 +259,7 @@ public class BattleView extends JPanel implements Observer{
 				if (x >= 480 - RunButtonWidth - RunButtonWidth_OFFSET && x < 480 - RunButtonWidth_OFFSET 
 						&& y >= 320 - RunButtonHeight - RunButtonHeight_OFFSET && y < 320 - RunButtonHeight_OFFSET){
 					System.out.println("Click on: " + x + ", " + y);
+					gameModel.getTrainer().justCaught = false;
 					playTransitionAnimation();
 				}
 			}			
@@ -235,16 +294,18 @@ public class BattleView extends JPanel implements Observer{
 	/**************** Define sprite sheet name ****************/
 	
 	// declare image sheet
-	private BufferedImage pokemonSheet;
-	private BufferedImage battleField;
-	private BufferedImage effectSheet;
-	private BufferedImage menuSheet;
-	private BufferedImage barSheet;
-	private BufferedImage trainerSheet;
-	private BufferedImage itemSheet;
+	private static BufferedImage pokemonSheet;
+	private static BufferedImage battleField;
+	private static BufferedImage effectSheet;
+	private static BufferedImage menuSheet;
+	private static BufferedImage barSheet;
+	private static BufferedImage trainerSheet;
+	private static BufferedImage itemSheet;
 	private static BufferedImage transSheet;
+	private static BufferedImage victorySheet;
 	
 	private static final String TextureFolderPath = "images"+ File.separator + "Texture" + File.separator;
+	
 	private static final String pokemonTextureFileName = "pokemon_pokemons.png";
 	private static final String trainerTextureFileName = "pokemon_trainer.png";
 	private static final String effectTextureFileName = "pokemon_effect.png";
@@ -253,6 +314,7 @@ public class BattleView extends JPanel implements Observer{
 	private static final String battleFieldFileName = "pokemon_battle_field.png";
 	private static final String itemTextureFileName = "pokemon_item.png";
 	private static final String menuFrameFileName = "pokemon_menu_frame.png";
+	private static final String victoryFieldFileName = "pokemon_backgrounds.png";
 	private static final String TransitionTextureFileName = "TransitionBall" + File.separator + "pokeball_transition_00.png";
  		
 	/********************** Load Image **********************/
@@ -265,6 +327,7 @@ public class BattleView extends JPanel implements Observer{
 		loadHpBarTexture();
 		loadBattleField();
 		loadItemTexture();
+		loadVictoryFieldTexture();
 		generateOFFSETList();
 	}
 	
@@ -375,6 +438,19 @@ public class BattleView extends JPanel implements Observer{
 		}
 	}
 	
+	private void loadVictoryFieldTexture(){
+		String filePath = TextureFolderPath + victoryFieldFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File victoryTextureFile = new File(filePath);
+			victorySheet = ImageIO.read(victoryTextureFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
 
 
 	// define the upper left point for all pokemon on the sheet
@@ -427,7 +503,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	private final static int BattleField_Grass_OFFSET_X = 497;
 	private final static int BattleField_Grass_OFFSET_Y = 12;
-	
+		
 	private final static int BattleField_Sand_OFFSET_X = 11;
 	private final static int BattleField_Sand_OFFSET_Y = 242;
 	
@@ -437,7 +513,7 @@ public class BattleView extends JPanel implements Observer{
 	private BufferedImage drawBattleField(GroundType gndType){
 		if (gndType == GroundType.GRASSLAND){
 			return battleField.getSubimage(BattleField_Grass_OFFSET_X, BattleField_Grass_OFFSET_Y, 
-					BattleField_Width, BattleField_Height);
+						BattleField_Width, BattleField_Height);
 		}
 		else if (gndType == GroundType.SOIL){
 			return battleField.getSubimage(BattleField_Sand_OFFSET_X, BattleField_Sand_OFFSET_Y, 
@@ -450,8 +526,35 @@ public class BattleView extends JPanel implements Observer{
 	}
 	
 	
+	/********************** Draw Victory Field **********************/
 	
+	private final static int VictoryField_Height = 360;
+	private final static int VictoryField_Width = 480;
 	
+	private final static int VictoryField_Grass_OFFSET_X = 3;
+	private final static int VictoryField_Grass_OFFSET_Y = 1459;
+		
+	private final static int VictoryField_Sand_OFFSET_X = 3;
+	private final static int VictoryField_Sand_OFFSET_Y = 1096;
+	
+	private final static int VictoryField_Magic_OFFSET_X = 3;
+	private final static int VictoryField_Magic_OFFSET_Y = 6178;
+	
+	private BufferedImage drawVictoryField(GroundType gndType){
+		if (gndType == GroundType.GRASSLAND){
+			return victorySheet.getSubimage(VictoryField_Grass_OFFSET_X, VictoryField_Grass_OFFSET_Y, 
+					VictoryField_Width, VictoryField_Height);
+		}
+		else if (gndType == GroundType.SOIL){
+			return victorySheet.getSubimage(VictoryField_Sand_OFFSET_X, VictoryField_Sand_OFFSET_Y, 
+					VictoryField_Width, VictoryField_Height);
+		}
+		else{
+			return victorySheet.getSubimage(VictoryField_Magic_OFFSET_X, VictoryField_Magic_OFFSET_Y, 
+					VictoryField_Width, VictoryField_Height);
+		}
+	}
+		
 	/********************** Draw Battle Menu **********************/
 	private final static int BattleMenu_Height = 96;
 	private final static int BattleMenu_Width = 480;
@@ -469,7 +572,7 @@ public class BattleView extends JPanel implements Observer{
 	
 	/********************** Draw Trainer **********************/
 	private final static int Trainer_Height = 98;
-	
+
 	private final static int Trainer_Steady_Width = 75;
 	private final static int Trainer_Throw01_Width = 128;
 	private final static int Trainer_Throw02_Width = 106;
@@ -483,6 +586,11 @@ public class BattleView extends JPanel implements Observer{
 	private final static int Trainer_Throw02_OFFSET_X = 263;
 	private final static int Trainer_Throw03_OFFSET_X = 390;
 	private final static int Trainer_Throw04_OFFSET_X = 521;
+	
+	private final static int Trainer_Victory_Width = 83;
+	private final static int Trainer_Victory_Height = 115;	
+	private final static int Trainer_Victory_OFFSET_X = 676;	
+	private final static int Trainer_Victory_OFFSET_Y = 350;
 	
 	private BufferedImage drawTrainer(){
 		// set the corresponding height
@@ -542,6 +650,12 @@ public class BattleView extends JPanel implements Observer{
 		p.setLocation(trainerMidLocation_X - trainerCurWidth/2, trainerMidLocation_Y - trainerCurHeight);
 		return p;
 	}
+	
+	// draw pose of the trainer
+	private BufferedImage drawTrainerPose(){
+		return trainerSheet.getSubimage(Trainer_Victory_OFFSET_X, Trainer_Victory_OFFSET_Y, 
+				Trainer_Victory_Width, Trainer_Victory_Height);
+	}
 		
 	
 	/********************** Draw Pokemon **********************/
@@ -559,9 +673,13 @@ public class BattleView extends JPanel implements Observer{
 		pokemonCurHeight = Pokemon_Height;
 		pokemonCurWidth = Pokemon_Width;
 		pokemonUpperLeft = getPokemonUpperLeft();
+		if (isCaught){
+			pokemonUpperLeft.setLocation(pokemonMidLocation_X - Ball_Regular_Width/2, pokemonMidLocation_Y - Ball_Regular_Height);
+			return itemSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
+					Ball_Regular_Width, Ball_Regular_Height);	
+		}
 		
-		// check if the openning animation has end
-		// draw the pokemon
+		// check if the openning animation has end draw the pokemon
 		// pokemon remain steady during the movie in
 		if (openingStarted && !openingEnd){
 			// the pokemon move in later
@@ -582,11 +700,13 @@ public class BattleView extends JPanel implements Observer{
 				return drawPokemonA(type);
 			}
 		}
+		
+		// use the general timer to make the pokemon more alive
 		else{
-			if (generalCounter >= 21 && generalCounter <= 23){
+			if (generalCounter % 50 >= 21 && generalCounter <= 23 % 50){
 				return drawPokemonB(type);
 			}
-			else if (generalCounter >= 25 && generalCounter <= 27){
+			else if (generalCounter % 50 >= 25 && generalCounter % 50 <= 27){
 				return drawPokemonB(type);
 			}
 			else{
@@ -758,11 +878,15 @@ public class BattleView extends JPanel implements Observer{
 	
 	
 	/**************** Draw Item Effect ****************/
-	private int effect_Center_OFFSET_X = 0;
-	private int effect_Center_OFFSET_Y = 0;
-	private int effectRoationRadian = 0;
-	private final static int EffectFrame = 10;
-	
+	private final static int EffectBlockSize_X = 120;
+	private final static int EffectBlockSize_Y = 100;
+	private final static int EffectBlockCenter_OFFSET_X = 20;
+	private final static int EffectBlockCenter_OFFSET_Y = 20;
+	//private int effect_Center_OFFSET_X = 0;
+	//private int effect_Center_OFFSET_Y = 0;
+	//private int effectRoationRadian = 0;
+		
+	////////////// ROCK HIT ///////////////
 	private final static int Effect_Punch_Heavy_Width = 40;
 	private final static int Effect_Punch_Heavy_Height = 36;
 	private final static int Effect_Punch_Heavy_OFFSET_X = 960;
@@ -772,14 +896,113 @@ public class BattleView extends JPanel implements Observer{
 	private final static int Effect_Punch_Light_Height = 24;
 	private final static int Effect_Punch_Light_OFFSET_X = 962;
 	private final static int Effect_Punch_Light_OFFSET_Y = 500;
-	
+		
 	private BufferedImage drawEffect_Punch_Heavy(){
-		return effectSheet.getSubimage(Effect_Punch_Heavy_OFFSET_X, Effect_Punch_Heavy_OFFSET_Y, Effect_Punch_Heavy_Height, Effect_Punch_Heavy_Width);
+		return effectSheet.getSubimage(Effect_Punch_Heavy_OFFSET_X, Effect_Punch_Heavy_OFFSET_Y, Effect_Punch_Heavy_Width, Effect_Punch_Heavy_Height);
 	}
 	
 	private BufferedImage drawEffect_Punch_Light(){
-		return effectSheet.getSubimage(Effect_Punch_Light_OFFSET_X, Effect_Punch_Light_OFFSET_Y, Effect_Punch_Light_Height, Effect_Punch_Light_Width);
+		return effectSheet.getSubimage(Effect_Punch_Light_OFFSET_X, Effect_Punch_Light_OFFSET_Y, Effect_Punch_Light_Width, Effect_Punch_Light_Height);
 	}
+		
+	////////////// BAIT CHARM ///////////////
+	private final static int Effect_Heart_Full_Width = 29;
+	private final static int Effect_Heart_Full_Height = 24;
+	private final static int Effect_Heart_Full_OFFSET_X = 548;
+	private final static int Effect_Heart_Full_OFFSET_Y = 765;
+	
+	private final static int Effect_Heart_Large_Width = 23;
+	private final static int Effect_Heart_Large_Height = 20;
+	private final static int Effect_Heart_Large_OFFSET_X = 551;
+	private final static int Effect_Heart_Large_OFFSET_Y = 725;
+	
+	private final static int Effect_Heart_Medium_Width = 19;
+	private final static int Effect_Heart_Medium_Height = 15;
+	private final static int Effect_Heart_Medium_OFFSET_X = 553;
+	private final static int Effect_Heart_Medium_OFFSET_Y = 685;
+	
+	private final static int Effect_Heart_Small_Width = 11;
+	private final static int Effect_Heart_Small_Height = 10;
+	private final static int Effect_Heart_Small_OFFSET_X = 537;
+	private final static int Effect_Heart_Small_OFFSET_Y = 646;
+	
+	private final static int Effect_Heart_Tiny_Width = 8;
+	private final static int Effect_Heart_Tiny_Height = 8;
+	private final static int Effect_Heart_Tiny_OFFSET_X = 558;
+	private final static int Effect_Heart_Tiny_OFFSET_Y = 605;
+	
+	private Image drawEffect_Heart_Spiral(){
+		BufferedImage origin = effectSheet.getSubimage(Effect_Heart_Full_OFFSET_X, Effect_Heart_Full_OFFSET_Y, Effect_Heart_Full_Width, Effect_Heart_Full_Height);
+		double ratio = ((double)(itemEffectCounter + 1) / (EffectFrame/1.5));
+		int newWidth = (int) (Effect_Heart_Full_Width * ratio);
+		int newHeight = (int) (Effect_Heart_Full_Height * ratio);
+		Image img =  origin.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+		return img;
+	}
+	
+	// TODO: not going to use these part but i would like to save them
+	/*
+	private Image drawEffect_Heart_Spiral_Sub(){
+		if (itemEffectCounter >= 8){
+			return drawEffect_Heart_Full();
+		}
+		else if (itemEffectCounter >= 6 && itemEffectCounter < 8) {
+			return drawEffect_Heart_Large();
+		}
+		else if (itemEffectCounter >= 4 && itemEffectCounter < 6) {
+			return drawEffect_Heart_Medium();
+		}
+		else if (itemEffectCounter >= 2 && itemEffectCounter < 4) {
+			return drawEffect_Heart_Small();
+		}
+		else if (itemEffectCounter >= 0 && itemEffectCounter < 2) {
+			return drawEffect_Heart_Tiny();
+		}
+		else{
+			return null;
+		}
+	}
+	
+	private BufferedImage drawEffect_Heart_Full(){
+		if (itemEffectCounter >= 8 * 2){
+			return effectSheet.getSubimage(Effect_Heart_Full_OFFSET_X, Effect_Heart_Full_OFFSET_Y, Effect_Heart_Full_Width, Effect_Heart_Full_Height);
+		}
+		else{
+			return null;
+		}
+	}
+	
+	private BufferedImage drawEffect_Heart_Large(){
+		if (itemEffectCounter >= 6 * 2){
+			return effectSheet.getSubimage(Effect_Heart_Large_OFFSET_X, Effect_Heart_Large_OFFSET_Y, Effect_Heart_Large_Width, Effect_Heart_Large_Height);
+		}
+		else{
+			return null;
+		}
+	}
+	
+	private BufferedImage drawEffect_Heart_Medium(){
+		if (itemEffectCounter >= 4 * 2){
+			return effectSheet.getSubimage(Effect_Heart_Medium_OFFSET_X, Effect_Heart_Medium_OFFSET_Y, Effect_Heart_Medium_Width, Effect_Heart_Medium_Height);
+		}
+		else{
+			return null;
+		}
+	}
+	
+	private BufferedImage drawEffect_Heart_Small(){
+		if (itemEffectCounter >= 2 * 2){
+			return effectSheet.getSubimage(Effect_Heart_Small_OFFSET_X, Effect_Heart_Small_OFFSET_Y, Effect_Heart_Small_Width, Effect_Heart_Small_Height);
+		}
+		else{
+			return null;
+		}
+	}
+	
+	private BufferedImage drawEffect_Heart_Tiny(){
+		return effectSheet.getSubimage(Effect_Heart_Tiny_OFFSET_X, Effect_Heart_Tiny_OFFSET_Y, Effect_Heart_Tiny_Width, Effect_Heart_Tiny_Height);
+	}
+	*/
 	
 	
 	
@@ -802,7 +1025,12 @@ public class BattleView extends JPanel implements Observer{
 		moveInCounter = 0;
 		moveInTimer = new Timer(delayInMillis, new moveInTimerListener());
 		moveInTimer.start();
-		battleInfoBoard.setText("A WILD " + gameModel.getTrainer().getCurEncounterPokemon().getName());
+		
+		// set board info
+		battleInfoBoard.setText("<html>YOU ENCOUNTER A WILD " + "<font color='#33f70c' ><u>" + gameModel.getTrainer().getCurEncounterPokemon().getName().toUpperCase() + "</u></font>" + 
+								"<br>" +
+								"IT IS A " + "<font color='yellow'><u>" + gameModel.getTrainer().getCurEncounterPokemon().getQuality().name() + "</u></font>" +
+								" POKEMON" + "</html>");
 	}
 	
 	private class moveInTimerListener implements ActionListener {
@@ -829,7 +1057,7 @@ public class BattleView extends JPanel implements Observer{
 				moveInCounter = 0;
 				
 				// start general timer
-				startGeneralTimer();
+				//startGeneralTimer();
 				
 			}
 			
@@ -853,6 +1081,11 @@ public class BattleView extends JPanel implements Observer{
 		itemUsingCounter = 0;
 		itemUsingTimer = new Timer(delayInMillis * 11, new itemUsingTimerListener());
 		itemUsingTimer.start();
+		
+		// update the board
+		battleInfoBoard.setText("<html>YOU USE A " + "<font color='#ffff26' ><u>" + dummyItem.getName().toUpperCase() + "</u></font>" + 
+				"<br>" +
+				"THE POKEMON SEEMS TO BE " + "<font color='#ff38e7' ><u>" + dummyItem.getEffectMessage().toUpperCase() + "</u></font>" + "</html>");
 	}
 	
 	private class itemUsingTimerListener implements ActionListener {
@@ -901,6 +1134,9 @@ public class BattleView extends JPanel implements Observer{
 	private void startItemFlyTimer() {
 		itemFlyCounter = 0;
 		itemFlyTimer = new Timer(delayInMillis * 4, new itemFlyTimerListener());
+		if (usingItemClass == SafariBall.class){
+			this.playEffectSound(UltimateSoundEffectFileName);
+		}
 		itemFlyTimer.start();
 	}
 	
@@ -933,8 +1169,12 @@ public class BattleView extends JPanel implements Observer{
 	/******************* Draw Item Effect Animation ******************/
 	private boolean itemEffectStarted = false;	// flag to check if using item animation started
 	private boolean itemEffectEnd = true;
+	private final static int EffectFrame = 30;
+	private boolean BallShakeStarted = false;
+	private boolean BallShakeEnd = true;
 	
 	private void playItemEffectAnimation(){
+		RollingBallRadian = 0;
 		itemEffectStarted = true;
 		itemEffectEnd = false;
 		startItemEffectTimer();
@@ -946,7 +1186,21 @@ public class BattleView extends JPanel implements Observer{
 	
 	private void startItemEffectTimer() {
 		itemEffectCounter = 0;
-		itemEffectTimer = new Timer(delayInMillis * 9, new itemEffectTimerListener());
+		itemEffectTimer = new Timer((int) (delayInMillis * 4), new itemEffectTimerListener());
+		
+		// mark the disappear of pokemon
+		if (usingItemClass == SafariBall.class){
+			BallShakeStarted = true;
+			BallShakeEnd = false;
+		}
+		else if (usingItemClass == Bait.class){
+			System.out.println("play bait sound");
+			playEffectSound(BaitSoundEffectFileName);
+		}
+		else if (usingItemClass == Rock.class){
+			System.out.println("play rock sound");
+			playEffectSound(RockSoundEffectFileName);
+		}
 		itemEffectTimer.start();
 	}
 	
@@ -956,21 +1210,61 @@ public class BattleView extends JPanel implements Observer{
 		public void actionPerformed(ActionEvent e) {
 			
 			// play effect
-			if (itemEffectCounter < 10){
+			if (itemEffectCounter < EffectFrame){
 				repaint();
 				itemEffectCounter ++;
 			}
 			else{
+				BallShakeStarted = false;
+				BallShakeEnd = true;
+				itemEffectCounter = 0;
 				itemEffectEnd = true;
 				itemEffectStarted = false;
 				itemEffectTimer.stop();
-				itemEffectCounter = 0;
-				
+								
+				repaint();				
 				// TODO: check the item use result
-				
+				checkItemUseResult();
 			}
 			
 		}
+	}
+	
+	private void checkItemUseResult(){
+		// ball result
+		if (usingItemClass.isAssignableFrom(SafariBall.class)){
+			/////////////// Check if Caught for Ball Use ///////////////
+			if (gameModel.checkIfCaughtPokemon(gameModel.getTrainer().getCurEncounterPokemon())){
+				isCaught = true;
+				battleInfoBoard.setText("<html>CONGRATULATIONS!!!<br>"
+						+ "YOU CAUGHT A " + "<font color='#33f70c' ><u>" + gameModel.getTrainer().getCurEncounterPokemon().getName().toUpperCase() + "</u></font>" + "</html>");
+				playCaughtAnimation();
+				gameModel.getTrainer().justCaught = true;
+			}
+			else{
+				// TODO: playEscapeAnimation();
+				// set board info
+				battleInfoBoard.setText("<html>THE WILD POKEMON ESCAPED FROM THE BALL<br>KEEP IT UP</html>");
+				repaint();
+			}
+			
+		}
+		// other result
+		else{
+			if (gameModel.checkIfRunPokemon(gameModel.getTrainer().getCurEncounterPokemon())){
+				// TODO: playRunAwayAnimation();
+				// set board info
+				battleInfoBoard.setText("<html>THE WILD POKEMON RUNS AWAY<br>BATTLE END</html>");
+				gameModel.getTrainer().justCaught = false;
+			}
+			else{
+				// set board info
+				battleInfoBoard.setText("<html>THE WILD POKEMON IS STILL THERE<br>KEEP IT UP</html>");
+				repaint();
+			}
+		}
+		
+		usingItemClass = null;
 	}
 	
 	
@@ -996,6 +1290,7 @@ public class BattleView extends JPanel implements Observer{
 	public void playTransitionAnimation() {		
 		System.out.println("start transition timer");
 		startTransTimer();
+
 	}
 	
 	private class transTimerListener implements ActionListener {
@@ -1003,6 +1298,9 @@ public class BattleView extends JPanel implements Observer{
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			if (transMoveCounter < FramePerTrans){
+				if (transMoveCounter == 20){
+					battleInfoBoard.setVisible(false);
+				}
 				repaint();
 				transMoveCounter++;
 				//System.out.println("counter: " + transMoveCounter);
@@ -1091,12 +1389,63 @@ public class BattleView extends JPanel implements Observer{
 	
 	
 	
+	/***************************** Caught Timer *************************************/
+	private Timer caughtTimer;
+	private int caughtCounter = 0;
+	public final static int FramePerCaught = 10;
+	//private static final double PixelPerCaughtFrame = 16;
+	private boolean caughtStarted = false;
+	private boolean caughtEnd = true;
+	//private double transRotationRadian = 0;
+	
+	private void startCaughtTimer() {
+		caughtTimer = new Timer(delayInMillis * 100, new caughtTimerListener());
+		caughtStarted = true;
+		caughtEnd = false;
+		
+		stopPlayBackgroundSound();
+		playEffectSound(CatchMusicFileName);
+		
+		playBackgroundMusic(VictoryMusicFileName);
+		caughtTimer.start();
+		callEndOptionPane();
+		
+		
+	}
+	
+	public void playCaughtAnimation() {		
+		System.out.println("start caught timer");
+		startCaughtTimer();
+
+	}
+	
+	private class caughtTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			/*
+			if (caughtEnd){
+				caughtStarted = false;
+				caughtTimer.stop();
+				caughtCounter = 0;
+				repaint();
+				playTransitionAnimation();
+				
+			}
+			*/
+			repaint();
+			caughtCounter++;
+		
+
+		}
+	}	
+	
 	/**************** Overall Timer *****************/
 	////////////Item Timer ////////////
 	private Timer generalTimer;
 	private int generalCounter;
 
-	private void startGeneralTimer() {
+	protected void startGeneralTimer() {
 		generalCounter = 0;
 		generalTimer = new Timer(delayInMillis * 10, new generalTimerListener());
 		generalTimer.start();
@@ -1106,16 +1455,29 @@ public class BattleView extends JPanel implements Observer{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			
-			generalCounter ++;
 			// reset the counter when go beyond 50
-			if (generalCounter > 50){
-				generalCounter = 0;
+			if (generalCounter == 0){
+				if (isCaught){
+					playBackgroundMusic(VictoryMusicFileName);
+				}
+				else{
+					playBackgroundMusic(BattleMusicFileName);
+				}
+			}
+			else if (curBackgroundPlayer.getStatus() == 2 && !isCaught){
+				playBackgroundMusic(BattleMusicFileName);
 			}		
+			else if (curBackgroundPlayer.getStatus() == 2 && isCaught){
+				playBackgroundMusic(VictoryMusicFileName);
+			}
+
 			
 			if (InteractEnable()){
 				repaint();
 			}
+			
+			//if (backgroundPlayer.)
+			generalCounter ++;
 		
 		}
 	
@@ -1135,16 +1497,47 @@ public class BattleView extends JPanel implements Observer{
 			return;
 		}
 		
+		/*
+		// play background music
+		if (!isCaught && (backgroundPlayer == null || backgroundPlayer.isComplete())){
+			playBackgroundMusic(BattleMusicFileName);
+			System.out.println("play music spam");
+		}
+		else{
+			playBackgroundMusic(VictoryMusicFileName);
+		}
+		*/
+		
 		//System.out.println("Pokemon Mid Location: " + pokemonMidLocation_X + ", " + pokemonMidLocation_Y);
 		
 		// draw the back ground
-		g2.drawImage(drawBattleField(GroundType.GRASSLAND), 0, 0, null);
+		if ((transStarted && !transEnd  && isCaught) || caughtCounter >= 2){
+			g2.drawImage(drawVictoryField(GroundType.GRASSLAND), 0, 0, null);
+		}
+		else{
+			g2.drawImage(drawBattleField(GroundType.GRASSLAND), 0, 0, null);
+		}
 		g2.drawImage(drawBattleMenu(), 0, BattleField_Height, null);
 		
 
 		// draw the trainer and pokemon
-		g2.drawImage(drawPokemon(curPokemon.getSpecy()), pokemonUpperLeft.x, pokemonUpperLeft.y, null);
-		g2.drawImage(drawTrainer(), trainerUpperLeft.x, trainerUpperLeft.y, null);
+		// dont display the pokemon when ball shaking
+		if (!transStarted && transEnd){
+			if (caughtStarted && !caughtEnd && caughtCounter < 2){			
+				g2.drawImage(drawCaughtPokemon(), ItemFinalCenterLocation_X, ItemFinalCenterLocation_Y - Ball_Regular_Height/2, null);
+			}
+			else if (!BallShakeStarted && BallShakeEnd && caughtCounter == 0){
+				g2.drawImage(drawPokemon(curPokemon.getSpecy()), pokemonUpperLeft.x, pokemonUpperLeft.y, null);
+			}
+		}
+		
+		// draw trainer
+		if ((transStarted && !transEnd && isCaught) || caughtCounter >= 2){
+			g2.drawImage(drawTrainerPose(), 240 - Trainer_Victory_Width/2, 160 - Trainer_Victory_Height + 30, null);
+		}
+		else{
+			g2.drawImage(drawTrainer(), trainerUpperLeft.x, trainerUpperLeft.y, null);
+		}
 		
 		// draw item and effect
 		// set the transform
@@ -1154,64 +1547,330 @@ public class BattleView extends JPanel implements Observer{
 			AffineTransform trans = AffineTransform.getTranslateInstance(itemUpperLeft.x, itemUpperLeft.y);
 			trans.rotate(itemRotationRadian, itemCurWidth/2, itemCurHeight/2);
 			g2.drawImage(img, trans, null);
-			System.out.println("Item Mid Location: " + itemUpperLeft.x + ", " + itemUpperLeft.y);
+			//System.out.println("Item Mid Location: " + itemUpperLeft.x + ", " + itemUpperLeft.y);
 		}
 		//g2.drawImage(drawItemFly(usingItemType), itemUpperLeft.x, itemUpperLeft.y, null);
+				
+		if (itemEffectStarted && !itemEffectEnd){
+			paintItemEffectImage(g2);
+		}
 		
 		
 		if (transStarted && !transEnd){
-			// draw black rectange
-			if (transMoveCounter > 1 && transMoveCounter < 32){
-				g2.setColor(Color.BLACK);
-				//int startX = 0;
-				//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
-				
-				g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				
-				//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
-				
-				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-			}
-			else if (transMoveCounter >= 32){
-				g2.setColor(Color.BLACK);
-				g2.fillRect(0, 0, 480, 80);
-				
-				g2.fillRect(0, 80, 480, 80);
-				
-				g2.fillRect(0, 160, 480, 80);
-				
-				g2.fillRect(0, 240, 480, 80);
-			}
-			// draw ball
-			if (transMoveCounter < 5){
-				g2.drawImage(drawTransitionBall_01(), 0, 0, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
-			}
-			else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
-				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
-				g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
-			}
-			else{				
-				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
-			}
-			
+			paintTransitionImage(g2);
 		}
 		
+		
+	}
+		
+	//////////////// Paint Item Effect /////////////////
+	private double RollingBallRadian = 0;
+	
+	private void paintItemEffectImage(Graphics2D g2){
+		// paint ball effect
+		if (usingItemClass.isAssignableFrom(SafariBall.class)){
+			// get the upper left point of the ball
+			Point p = generateRollingBallUpperLeft(itemEffectCounter);
+			
+			//System.out.println("Location: " + p.x + ", " + p.y);
+			
+			// rotate the ball
+			BufferedImage img = itemSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
+					Ball_Regular_Width, Ball_Regular_Height);	
+			AffineTransform trans = AffineTransform.getTranslateInstance(p.x, p.y);
+			trans.rotate(RollingBallRadian, Ball_Regular_Width/2, Ball_Regular_Height/2);
+			g2.drawImage(img, trans, null);
+		}
+		// paint bait effect
+		else if (usingItemClass.isAssignableFrom(Bait.class)){
+			Point p = generateArchSpiralPoint(itemEffectCounter);
+			g2.drawImage(drawEffect_Heart_Spiral(), p.x - 20, p.y - 20, null);
+		}
+		// paint rock effect
+		else if (usingItemClass.isAssignableFrom(Rock.class)){
+			int x = (int) (ItemFinalCenterLocation_X + (Math.random()  - 0.5 )* EffectBlockSize_X - EffectBlockCenter_OFFSET_X);
+			int y = (int) (ItemFinalCenterLocation_Y + (Math.random() - 0.5 ) * EffectBlockSize_Y - EffectBlockCenter_OFFSET_Y);
+			
+			// choose which to show
+			if (Math.random() < 0.5){
+				g2.drawImage(drawEffect_Punch_Heavy(), x, y, null);
+			}
+			else{
+				g2.drawImage(drawEffect_Punch_Light(), x, y, null);
+			}
+		}
+		else{
+			return;
+		}
+	}
+	
+	//////////////// Paint Caught Scene /////////////////
+	private BufferedImage drawCaughtPokemon(){
+		return itemSheet.getSubimage(Ball_Regular_OFFSET_X, Ball_Regular_OFFSET_Y, 
+				Ball_Regular_Width, Ball_Regular_Height);	
+	}
+	
+	
+	//////////////// Transition /////////////////
+	private void paintTransitionImage(Graphics2D g2){
+		// draw black rectange
+		if (transMoveCounter > 1 && transMoveCounter < 32){
+			g2.setColor(Color.BLACK);
+			//int startX = 0;
+			//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
+			
+			g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			
+			//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
+			
+			g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+		}
+		else if (transMoveCounter >= 32){
+			g2.setColor(Color.BLACK);
+			g2.fillRect(0, 0, 480, 80);
+			
+			g2.fillRect(0, 80, 480, 80);
+			
+			g2.fillRect(0, 160, 480, 80);
+			
+			g2.fillRect(0, 240, 480, 80);
+		}
+		// draw ball
+		if (transMoveCounter < 5){
+			g2.drawImage(drawTransitionBall_01(), 0, 0, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+		}
+		else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
+			g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
+			g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
+		}
+		else{				
+			g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+		}
+	}
+	
+	/********************** Archimedean spiral **************************/
+		
+	private Point generateArchSpiralPoint(int counter){
+	        double angle = Math.toRadians(60 * counter);
+	        int a = 2;
+	        int b = 2;
+	        int x = (int) (ItemFinalCenterLocation_X + (a + b * angle) * Math.cos(angle));
+	        int y = (int) (ItemFinalCenterLocation_Y + (a + b * angle) * Math.sin(angle) + EffectBlockCenter_OFFSET_Y);
+	        
+	        return (new Point(x, y));
+	}
+	
+	
+	/********************** Rolling Pokeball **************************/
+	private Point generateRollingBallUpperLeft(int counter){
+		if (counter >= 25 && counter <= 29){
+			RollingBallRadian = Math.pow(-1, (double)(counter - 25));
+		}
+		else if (counter >= 16 && counter <= 24){
+			if (counter >= 16 && counter <= 18){
+				RollingBallRadian--;
+			}
+			else if (counter > 18 && counter <= 22){
+				RollingBallRadian++;
+			}
+			else{
+				RollingBallRadian--;
+			}
+		}
+		else{
+			if (counter >= 0 && counter <= 4){
+				RollingBallRadian--;
+			}
+			else if (counter > 4 && counter <= 12){
+				RollingBallRadian++;
+			}
+			else{
+				RollingBallRadian--;
+			}
+		}
+		
+		int x = (int) (RollingBallRadian * Ball_Regular_Width/2 + ItemFinalCenterLocation_X) ;
+		int y = ItemFinalCenterLocation_Y - Ball_Regular_Height/2;
+		
+		return (new Point(x, y)); 
+	}
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	/************* Overall Control **************/
+	public void stopAllSoundTrack(){
+		this.stopPlayBackgroundSound();
+		this.stopPlayEffectSound();
+	}
+	
+	private final static String SoundTrackFolder = "soundtrack" + File.separator;
+	
+	////////////////// Background Sound /////////////////
+	private static String curBackgroundMusicFileName = "battle_wild_01.mp3";
+	
+	private static String BattleMusicFileName = "battle_wild_01.mp3";
+	private static String VictoryMusicFileName = "victory.mp3";
+	private BasicPlayer curBackgroundPlayer;
+	//private FileInputStream fis_BackgroundMusic;
+	//private BufferedInputStream bis_BackgroundMusic;
+	private Thread backgroundThread;
+			
+	private void playBackgroundMusic(String fileName) {
+	    try {
+			stopPlayBackgroundSound();
+			curBackgroundMusicFileName = fileName;
+	    	File fis = new File(SoundTrackFolder + fileName);
+	    	//BufferedInputStream bis = new BufferedInputStream(fis);
+	    	curBackgroundPlayer = new BasicPlayer();
+	    	curBackgroundPlayer.open(fis);
+	    	//curBackgroundPlayer.setGain(0.1);
+	    } 
+	    catch (Exception e) {
+	    	e.printStackTrace();
+			//System.err.printf("1. cannot open: " + fileName, e.getMessage());
+	    }
+	    
+	    
+	    backgroundThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			curBackgroundPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("2. cannot open: " + fileName, e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    backgroundThread.start();
+	    
+	}
+	
+	private void stopPlayBackgroundSound(){
+		if (curBackgroundPlayer != null) {
+			try {
+				curBackgroundPlayer.stop();
+			}
+			catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+		if (backgroundThread != null){
+			backgroundThread.interrupt();
+		}
+		
+	}
+	
+	////////////////// Vcitory Sound /////////////////
+	private final static String CatchMusicFileName = "catch.mp3";
+	private final static String BaitSoundEffectFileName = "Bait_Effect.wav";
+	private final static String RockSoundEffectFileName = "Rock_Effect.wav";
+	private final static String UltimateSoundEffectFileName = "Ultimate.mp3";
+	private BasicPlayer curEffectPlayer;
+	private Thread effectThread;
+	
+	
+	private void playEffectSound(String fileName) {
+	    try {
+	    	stopPlayEffectSound();
+	    	File fis = new File(SoundTrackFolder + fileName);
+	    	//BufferedInputStream bis = new BufferedInputStream(fis);
+	    	curEffectPlayer = new BasicPlayer();
+	    	curEffectPlayer.open(fis);
+	    	curEffectPlayer.setGain(1);
+		    //effectPlayer.play();
+	    } 
+	    catch (Exception e) {
+	    	e.printStackTrace();
+	        //System.err.printf("1. cannot open: " + fileName, e.getMessage());
+	    }
+
+	    
+	    effectThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			curEffectPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("2. cannot open: " + fileName, e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    effectThread.start();
+	    
+	}
+	
+	private void stopPlayEffectSound(){
+		if (effectThread != null){
+			effectThread.interrupt();
+		}
+		
+		if (curEffectPlayer != null) {
+			try {
+				curEffectPlayer.stop();
+			} 
+			catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	
+	private boolean endGameOptionPaneStarted = false;
+	//JOptionPane endGameOptionPane = new JOptionPane();
+	
+	private void callEndOptionPane(){
+		endGameOptionPaneStarted = true;
+		String newName = JOptionPane.showInputDialog("Do you want a new name for it?");
+		if (newName == null){
+			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
+			
+			System.out.println("no new name");
+		}
+		else{			
+			gameModel.getTrainer().getCurEncounterPokemon().setName(newName);
+			gameModel.getTrainer().catchPokemon(gameModel.getTrainer().getCurEncounterPokemon());
+			
+		}
+		endGameOptionPaneStarted = false;
+		//System.out.println("" + gameModel.getTrainer().getPokemonCollection().getSize());
+		
+		// end the battle
+		playTransitionAnimation();
 	}
 
 }

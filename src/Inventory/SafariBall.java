@@ -14,7 +14,7 @@ public class SafariBall extends Item{
 
 	@Override
 	public String getInfo() {
-		return "This is a regular safari ball";
+		return "A special Ball that is used only in the Safari Zone. It is finished with a camouflage pattern.";
 	}
 
 	@Override
@@ -40,9 +40,8 @@ public class SafariBall extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getEffectMessage() {
+		return "STRUGGLING";
 	}
 
 }

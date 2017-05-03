@@ -28,6 +28,10 @@ public class PokemonCollection implements TableModel, Serializable{
 		this.pokemonList = new ArrayList<Pokemon>();
 	}
 	
+	public Pokemon getPokemon(int index){
+		return this.pokemonList.get(index);
+	}
+	
 	// add new pokemon into the collection
 	public void addPokemon(Pokemon newPokemon){
 		this.pokemonList.add(newPokemon);
@@ -36,6 +40,66 @@ public class PokemonCollection implements TableModel, Serializable{
 	// get the size of the collection
 	public int getSize(){
 		return this.pokemonList.size();
+	}
+	
+	// get the number of common pokemon
+	public int getCommonNum(){
+		int counter = 0;
+		for (Pokemon p : pokemonList){
+			if (p.getSpecy().getQuality() == PokemonQuality.COMMON){
+				counter++;
+			}
+		}
+		
+		return counter;
+	}
+	
+	// get the number of uncommon pokemon
+	public int getUncommonNum(){
+		int counter = 0;
+		for (Pokemon p : pokemonList){
+			if (p.getSpecy().getQuality() == PokemonQuality.UNCOMMON){
+				counter++;
+			}
+		}
+		
+		return counter;
+	}
+	
+	// get the number of common pokemon
+	public int getRareNum(){
+		int counter = 0;
+		for (Pokemon p : pokemonList){
+			if (p.getSpecy().getQuality() == PokemonQuality.RARE){
+				counter++;
+			}
+		}
+		
+		return counter;
+	}
+	
+	// get the number of common pokemon
+	public int getEpicNum(){
+		int counter = 0;
+		for (Pokemon p : pokemonList){
+			if (p.getSpecy().getQuality() == PokemonQuality.EPIC){
+				counter++;
+			}
+		}
+		
+		return counter;
+	}
+	
+	// get the number of common pokemon
+	public int getLegendNum(){
+		int counter = 0;
+		for (Pokemon p : pokemonList){
+			if (p.getSpecy().getQuality() == PokemonQuality.LEGENDARY){
+				counter++;
+			}
+		}
+		
+		return counter;
 	}
 
 
@@ -111,7 +175,7 @@ public class PokemonCollection implements TableModel, Serializable{
 			return this.pokemonList.get(row).getSpecy().getName();
 		}		
 		if (col == 2){
-			return this.pokemonList.get(row).getName();
+			return this.pokemonList.get(row).getNickName();
 		}
 		if (col == 3){
 			return this.pokemonList.get(row).recordMetDate();

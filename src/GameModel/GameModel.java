@@ -22,6 +22,8 @@ public class GameModel extends Observable implements Serializable{
 	private int yCoords;
 	private int xPrevCoords;
 	private int yPrevCoords;
+	private int xNext;
+	private int yNext;
 		
 	// map information
 	private Map_Test map_Test;
@@ -32,11 +34,12 @@ public class GameModel extends Observable implements Serializable{
 	private Map_11 map_11;
 	private Map_12 map_12;
 	
-	private Map curMap;
+	private MapPokemon curMap;
+	private boolean teleporting = false;
 	
 	// battle information
-	private WildPokemonGenerator wildPokemonGenerator;
-	private boolean encounteredThisBlock;	// flag to check if just encounter a pokemon before move
+	private WildPokemonGenerator wildPokemonGenerator = WildPokemonGenerator.getInstance();
+	private boolean encounteredThisBlock = false;	// flag to check if just encounter a pokemon before move
 	
 	// game information
 	private Mission mission;
@@ -45,33 +48,28 @@ public class GameModel extends Observable implements Serializable{
 	private boolean isLost = false;
 	
 	
-	public GameModel(){
+	public GameModel(String name, MissionType newMission){
 		initiateMap();
-		wildPokemonGenerator = WildPokemonGenerator.getInstance();
-		encounteredThisBlock = false;
-		curTrainer = new Trainer("T.M.T.");
-		setLocation(22, 31);
-		xPrevCoords = 22;
-		yPrevCoords = 31;
-		setCurMap(map_01);
-		setMission(new Mission(MissionType.TEST));
+
+		curTrainer = new Trainer(name);
+		setMission(new Mission(newMission));
+		mission.setTrainer(curTrainer);
+		setLocation(30, 9);
+		xPrevCoords = 30;
+		yPrevCoords = 9;
+		setCurMap(map_10);
 		
-		curTrainer.catchPokemon(new Abra("A_1"));
-		curTrainer.catchPokemon(new Abra("A_2"));
-		curTrainer.catchPokemon(new Abra("A_3"));
-		curTrainer.catchPokemon(new Mew("M"));
-		curTrainer.addItem(ItemType.CAPTURE_POTION_MEDIUM);
-		curTrainer.addItem(ItemType.STEP_POTION_LARGE);
-		curTrainer.addItem(ItemType.BAIT);
-		curTrainer.addItem(ItemType.BAIT);
-		curTrainer.addItem(ItemType.BAIT);
-		curTrainer.addItem(ItemType.BALL);
-		curTrainer.addItem(ItemType.BALL);
-		curTrainer.addItem(ItemType.BALL);
-		curTrainer.addItem(ItemType.ROCK);
-		curTrainer.addItem(ItemType.ROCK);
-		curTrainer.addItem(ItemType.ROCK);
-		curTrainer.addItem(ItemType.ROCK);
+		// add startup item
+		for (int i = 0; i < this.mission.getInitBall(); i ++){
+			curTrainer.addItem(ItemType.BAIT);
+			curTrainer.addItem(ItemType.BALL);
+			curTrainer.addItem(ItemType.ROCK);
+		}
+		
+		curTrainer.getPokemonCollection().addPokemon(new Ekans("E1"));
+		curTrainer.getPokemonCollection().addPokemon(new Dratini("D1"));
+		curTrainer.getPokemonCollection().addPokemon(new Growlithe("G1"));
+		curTrainer.getPokemonCollection().addPokemon(new Pidgey("P1"));
 	}
 		
 	public void setTrainer(Trainer trainer){
@@ -85,7 +83,7 @@ public class GameModel extends Observable implements Serializable{
 	 */
 	
 	/**************** Map Related ***************/
-	public void setCurMap(Map map){
+	public void setCurMap(MapPokemon map){
 		this.curMap = map;
 	}
 		
@@ -148,7 +146,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	// get the current map of the game
-	public Map getCurMap(){
+	public MapPokemon getCurMap(){
 		return curMap;
 	}
 	
@@ -165,6 +163,7 @@ public class GameModel extends Observable implements Serializable{
 		
 	// set the coordinate of the trainer
 	public void setLocation(int x, int y){
+		curTrainer.setLocation(x, y);
 		this.xPrevCoords = xCoords;
 		this.yPrevCoords = yCoords;
 		this.xCoords = x;
@@ -217,7 +216,9 @@ public class GameModel extends Observable implements Serializable{
 		if (curMap.getBlock(nextX, nextY).getObstacle() != ObstacleType.NONE){
 			// TODO: notify the user that its not passable
 			// 		Check if it is an item
-			System.out.println("Encounter Obstacle: " + curMap.getBlock(nextX, nextY).getObstacle().name());
+			
+			//System.out.println("Encounter Obstacle: " + curMap.getBlock(nextX, nextY).getObstacle().name());
+			
 			setLocation(xCoords, yCoords);
 			update();
 			return;
@@ -226,8 +227,13 @@ public class GameModel extends Observable implements Serializable{
 		else if (curMap.getBlock(nextX, nextY).getInteractType() == InteractType.PORTAL){
 			// count step
 			curTrainer.incrementStep(1);
-			System.out.println("Encounter Interactable: " + curMap.getBlock(nextX, nextY).getInteractType().name());
-			teleportOnline(new Point(nextX, nextY));	
+			
+			//System.out.println("Encounter Interactable: " + curMap.getBlock(nextX, nextY).getInteractType().name());
+			
+			xNext = nextX;
+			yNext = nextY;
+			//teleportOnline(new Point(nextX, nextY));
+			teleporting = true;
 			update();
 			return;
 		}	
@@ -272,13 +278,14 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	// check if the character is on portal
-	public boolean onPortal(){
-		if (curMap.getBlock(xCoords, yCoords).getInteractType() == InteractType.PORTAL){
-			return true;
-		}
-		else{
-			return false;
-		}
+	public boolean isTeleporting(){
+		return teleporting;
+	}
+	
+	public void doneTeleporting(){
+		teleporting = false;
+		teleportOnline(new Point(xNext, yNext));
+		update();
 	}
 	
 	// Algorithm to encounter a pokemon when moving upon area that could met a pokemon
@@ -309,6 +316,9 @@ public class GameModel extends Observable implements Serializable{
 	public boolean checkIfCaughtPokemon(Pokemon p){
 		// calculate the dynamic catch rate
 		if (Math.random() < calculateCurCaughtChance(p)){
+			// TODO: increase your bonus basing on pokemon quality
+			
+			
 			return true;
 		}
 		else{
@@ -318,7 +328,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	public double calculateCurCaughtChance(Pokemon p){
-		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getBasicCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		double chance = (3 * p.getMaxHP() - 2.25 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
 		return chance;
 	}
 	
@@ -331,14 +341,91 @@ public class GameModel extends Observable implements Serializable{
 		else if (Math.random() < calculateCurRunChance(p)){
 			return true;
 		}
+		else if (p.getCapTurn() > p.getQuality().getMaxTurn()){
+			return true;
+		}
 		else{
 			return false;
 		}
 	}
 	
 	public double calculateCurRunChance(Pokemon p){
-		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getBasicRunChance()) * (1 - curTrainer.getReducedRun());
+		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getCurRunChance()) * (1 - curTrainer.getReducedRun());
 		return chance;
+	}
+	
+	/***************** Algorithm to Give Loot ******************/
+	// TODO: MORE ALGORITHM
+	public ItemType generateLoot(double baseChance){
+		if (Math.random() < baseChance){
+			// higher chance to get 
+			// 60% for lesser item
+			if (Math.random() > 0.6){
+				if (Math.random() > 0.8){
+					return ItemType.CAPTURE_POTION_SMALL;
+				}
+				else if (Math.random() > 0.6){
+					return ItemType.STEP_POTION_SMALL;
+				}
+				else if (Math.random() > 0.4){
+					return ItemType.HEAL_POTION_SMALL;
+				}
+				else if (Math.random() > 0.3){
+					return ItemType.ROCK;
+				}
+				else if (Math.random() > 0.2){
+					return ItemType.BAIT;
+				}
+				else{
+					return ItemType.BALL;
+				}
+			}
+			// 30% for medium
+			else if (Math.random() > 0.2 && Math.random() <= 0.6){
+				if (Math.random() > 0.8){
+					return ItemType.CAPTURE_POTION_MEDIUM;
+				}
+				else if (Math.random() > 0.6){
+					return ItemType.STEP_POTION_MEDIUM;
+				}
+				else if (Math.random() > 0.4){
+					return ItemType.HEAL_POTION_MEDIUM;
+				}
+				else if (Math.random() > 0.3){
+					return ItemType.ROCK;
+				}
+				else if (Math.random() > 0.2){
+					return ItemType.BAIT;
+				}
+				else{
+					return ItemType.BALL;
+				}
+			}
+			else{
+				if (Math.random() > 0.8){
+					return ItemType.CAPTURE_POTION_LARGE;
+				}
+				else if (Math.random() > 0.6){
+					return ItemType.STEP_POTION_LARGE;
+				}
+				else if (Math.random() > 0.4){
+					return ItemType.HEAL_POTION_LARGE;
+				}
+				else if (Math.random() > 0.3){
+					return ItemType.ROCK;
+				}
+				else if (Math.random() > 0.2){
+					return ItemType.BAIT;
+				}
+				else{
+					return ItemType.BALL;
+				}
+			}
+		}
+		else{
+			return null;
+		}
+		
 	}
 		
 	/*
@@ -375,6 +462,10 @@ public class GameModel extends Observable implements Serializable{
 		
 	public Trainer getTrainer(){
 		return this.curTrainer;
+	}
+	
+	public void createTrainer(String name){
+		curTrainer = new Trainer(name);
 	}
 	
 	public void update(){

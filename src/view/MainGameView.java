@@ -11,7 +11,9 @@ import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RasterFormatException;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
@@ -25,6 +27,9 @@ import GameModel.GameModel;
 import Map.GroundType;
 import Map.Map_00;
 import Map.ObstacleType;
+import javazoom.jl.player.Player;
+import javazoom.jlgui.basicplayer.BasicPlayer;
+import javazoom.jlgui.basicplayer.BasicPlayerException;
 
 public class MainGameView extends JPanel implements Observer{
 
@@ -56,90 +61,7 @@ public class MainGameView extends JPanel implements Observer{
 		return endMoving && transEnd;
 	}
 		
-	// draw the map
-	public void paintComponent(Graphics g){
-		super.paintComponent(g);
-		
-		Graphics2D g2 = (Graphics2D) g;
-		
-		// check the existence of model
-		if (gameModel == null){
-			return;
-		}
-		
-		// Check if play moving animation
-		if ((!startMoving && endMoving && !gameModel.getCurLocation().equals(gameModel.getPrevLocation())) || gameModel.onPortal()){
-			// calculate the position of the trainer during moving time
-			getOnMapTrainerMid();
-			getOnScreenTrainerMid();
-			getOnMapCenterOfView();
-		}		
-				
-		// draw view
-		g2.drawImage(drawMapView(), 0, 0, null);
-		// draw trainer
-		g2.drawImage(drawTrainer(), onScreenTrainerMid.x - Trainer_Width/2, onScreenTrainerMid.y - Trainer_Height + 10, null);
-		
-		//System.out.println("After Move:   CurX: " + curX + ", CurY: " + curY);
-		//printTrack();
-		// draw transition ball
-		if (transStarted && !transEnd){
-			// draw black rectange
-			if (transMoveCounter > 1 && transMoveCounter < 32){
-				g2.setColor(Color.BLACK);
-				
-				//int startX = 0;
-				//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
-				
-				g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				
-				//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
-				//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
-				
-				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-				
-				g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
-			}
-			else if (transMoveCounter >= 32){
-				g2.setColor(Color.BLACK);
-				g2.fillRect(0, 0, 480, 80);
-				
-				g2.fillRect(0, 80, 480, 80);
-				
-				g2.fillRect(0, 160, 480, 80);
-				
-				g2.fillRect(0, 240, 480, 80);
-			}
-			// draw ball
-			if (transMoveCounter < 5){
-				g2.drawImage(drawTransitionBall_01(), 0, 0, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
-			}
-			else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
-				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
-				g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
-			}
-			else{				
-				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
-				g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
-				g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
-			}
-			
-		}
-			
-		
-			
-	}
+
 	/**************** Calculator for Location ****************/
 	
 	private boolean trainerMove_Vertical = false;
@@ -253,12 +175,13 @@ public class MainGameView extends JPanel implements Observer{
 	private int trainerMoveCounter;
 	public final static int FramePerMove = 16;
 	public final static int delayInMillis = 20;
+	public final static int MoveDelayInMillis = 12;
 	private static final double PixelPerFrame = 2;
 	private boolean startMoving = false;
 	private boolean endMoving = true;
 	
 	private void startMoveTimer() {
-		moveTimer = new Timer(delayInMillis, new moveTimerListener());
+		moveTimer = new Timer(MoveDelayInMillis, new moveTimerListener());
 		startMoving = true;
 		endMoving = false;
 		moveTimer.start();
@@ -398,7 +321,12 @@ public class MainGameView extends JPanel implements Observer{
 				transEnd = true;
 				if (gameModel.getTrainer().getCurEncounterPokemon() != null){
 					setVisible(false);
+					generalTimer.stop();
 					return;
+				}
+				
+				if (gameModel.isTeleporting()){
+					gameModel.doneTeleporting();
 				}
 			}
 		}
@@ -408,9 +336,13 @@ public class MainGameView extends JPanel implements Observer{
 	@Override
 	public void update(Observable o, Object arg) {
 		gameModel = (GameModel) o;
-				
+		
+		// check if teleporting play the transition animation
+		if (gameModel.isTeleporting()){
+			playTransitionAnimation();
+		}		
 		// if the user did not move, dont play the moving animation
-		if (InteractEnable() && !gameModel.getPrevLocation().equals(gameModel.getCurLocation())){
+		else if (InteractEnable() && !gameModel.getPrevLocation().equals(gameModel.getCurLocation())){
 			
 			//System.out.println("call the drawing function");
 			
@@ -424,6 +356,7 @@ public class MainGameView extends JPanel implements Observer{
 			getOnScreenTrainerMid();
 			getOnMapCenterOfView();
 		}
+		
 		repaint();
 		
 		//printTrack();
@@ -835,4 +768,187 @@ public class MainGameView extends JPanel implements Observer{
 		return transSheet.getSubimage(Trans_BallOFFSET_X, TransBall_OFFSET_Y, TransBall_Width, TransBall_Height);
 	}
 	*/
+	
+	
+	/**************** Paint function ****************/
+	
+	public void paintComponent(Graphics g){
+		super.paintComponent(g);
+		
+		Graphics2D g2 = (Graphics2D) g;
+		
+		// check the existence of model
+		if (gameModel == null){
+			return;
+		}
+		
+		// Check if play moving animation
+		if ((!startMoving && endMoving && !gameModel.getCurLocation().equals(gameModel.getPrevLocation())) || gameModel.isTeleporting()){
+			// calculate the position of the trainer during moving time
+			getOnMapTrainerMid();
+			getOnScreenTrainerMid();
+			getOnMapCenterOfView();
+		}		
+				
+		// draw view
+		g2.drawImage(drawMapView(), 0, 0, null);
+		// draw trainer
+		g2.drawImage(drawTrainer(), onScreenTrainerMid.x - Trainer_Width/2, onScreenTrainerMid.y - Trainer_Height + 10, null);
+		
+		//System.out.println("After Move:   CurX: " + curX + ", CurY: " + curY);
+		//printTrack();
+		// draw transition ball
+		if (transStarted && !transEnd){
+			drawTransitionImage(g2);			
+		}
+			
+	}
+	
+	private void drawTransitionImage(Graphics g2){
+		// draw black rectange
+		if (transMoveCounter > 1 && transMoveCounter < 32){
+			g2.setColor(Color.BLACK);
+			//int startX = 0;
+			//int length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//System.out.println("Rect_1:		StratX: " + startX + "	length: " + length);
+			
+			g2.fillRect(0, 0, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			
+			//startX = (int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//length = (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame);
+			//System.out.println("Rect_2:		StratX: " + startX + "	length: " + length);
+			
+			g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			g2.fillRect(0, 160, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+			
+			g2.fillRect((int) (480 - ( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 240, (int) (( transMoveCounter - 2 + 0.5 ) * PixelPerTransFrame), 80);
+		}
+		else if (transMoveCounter >= 32){
+			g2.setColor(Color.BLACK);
+			g2.fillRect(0, 0, 480, 80);
+			
+			g2.fillRect(0, 80, 480, 80);
+			
+			g2.fillRect(0, 160, 480, 80);
+			
+			g2.fillRect(0, 240, 480, 80);
+		}
+		// draw ball
+		if (transMoveCounter < 5){
+			g2.drawImage(drawTransitionBall_01(), 0, 0, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) 0, VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - ( transMoveCounter + 1 ) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+		}
+		else if (transMoveCounter < FramePerTrans && transMoveCounter > FramePerTrans- 6){				
+			g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), 0, null);
+			g2.drawImage(drawTransitionBall_02(), 0, VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) (2 * VisionRadius_X - (FramePerTrans - transMoveCounter - 1) * PixelPerTransFrame), VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), 0, (int) (VisionRadius_Y * 1.5), null);
+		}
+		else{				
+			g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), 0, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1 ) * PixelPerTransFrame), VisionRadius_Y / 2, null);
+			g2.drawImage(drawTransitionBall_01(), (int) (0 + ( transMoveCounter - 4 ) * PixelPerTransFrame), VisionRadius_Y, null);
+			g2.drawImage(drawTransitionBall_02(), (int) (VisionRadius_X * 2 - (transMoveCounter + 1) * PixelPerTransFrame), (int) (VisionRadius_Y * 1.5), null);
+		}
+	}
+	
+	
+	/*
+	 * *************************************** *
+	 *  	  SoundTrack Creator Below         *
+	 * *************************************** *
+	 */
+	private BasicPlayer MyAudioPlayer;
+	private Thread playerThread;
+	private static String curBackMusicFileName = "route_101.mp3";
+	private final static String soundtrackFolder = "soundtrack" + File.separator;
+	
+	public void playMainGameBackgroundMusic() {
+	    try {
+	    	stopPlayCurSound();
+	    	if (Math.random() > 0.66){
+	    		curBackMusicFileName = "route_120.mp3";
+	    	}
+	    	else if (Math.random() > 0.33 && Math.random() <= 0.66){
+	    		curBackMusicFileName = "route_120.mp3";
+	    	}
+	    	else{
+	    		curBackMusicFileName = "verdanturf_town.mp3";
+	    	}
+	    	
+	    	File file = new File(soundtrackFolder + curBackMusicFileName);
+	    	MyAudioPlayer = new BasicPlayer();
+	    	MyAudioPlayer.open(file);
+	    } 
+	    catch (Exception e) {
+	        System.err.printf("%s\n", e.getMessage());
+	    }
+
+	    playerThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			MyAudioPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("%s\n", e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    playerThread.start();
+	}
+	
+	public void stopPlayCurSound(){
+		if (MyAudioPlayer != null) {
+			try {
+				MyAudioPlayer.stop();
+			} catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			};
+		}
+		
+		if (playerThread != null){
+			playerThread.interrupt();
+		}
+	}
+	
+	
+	
+	/**************** Overall Timer *****************/
+	////////////Item Timer ////////////
+	private Timer generalTimer;
+	private int generalCounter;
+
+	public void startGeneralTimer() {
+		playMainGameBackgroundMusic();
+		generalCounter = 0;
+		generalTimer = new Timer(delayInMillis * 50, new generalTimerListener());
+		generalTimer.start();
+	}
+	
+	public void stopGeneralTimer(){
+		generalTimer.stop();
+	}
+
+	private class generalTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// reset the counter when go beyond 50
+			if (MyAudioPlayer.getStatus()  == 2){
+				playMainGameBackgroundMusic();
+				
+			}		
+			generalCounter++;
+		}
+	}	
 }
+
+
+

@@ -6,8 +6,8 @@ public enum MissionType {
 	TWENTYPOKEMON(Difficulty.EASY), 
 	THIRTYPOKEMON(Difficulty.NORMAL), 
 	FIFTYPOKEMON(Difficulty.HARD), 
-	FIVERARE(Difficulty.VERYHARD),
-	TEST(Difficulty.CASUAL);
+	FIVEEPIC(Difficulty.VERYHARD),
+	TEST(Difficulty.TEST);
 	
 	private final Difficulty difficulty;
 	

@@ -29,8 +29,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="4" language="java" name="Map.Map" project="pokemon_safari_zone" 
-    file="/pokemon_safari_zone/src/Map/Map.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="4" language="java" name="Map.MapPokemon" project="pokemon_safari_zone" 
+    file="/pokemon_safari_zone/src/Map/MapPokemon.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="88" width="104" x="951" y="296"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      

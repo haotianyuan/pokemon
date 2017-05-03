@@ -4,6 +4,10 @@ import Pokemon.Pokemon;
 import Trainer.Trainer;
 
 public class StepPotion extends Item{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6305062532400306948L;
 	private int restoreAmount;
 	
 	public StepPotion(int amount, String name, ItemType type){
@@ -13,7 +17,7 @@ public class StepPotion extends Item{
 	
 	@Override
 	public String getInfo() {
-		return "restore " + this.restoreAmount + " step count";
+		return "This step potion will recharge " + this.restoreAmount + " step count for the user";
 	}
 
 	@Override
@@ -40,7 +44,7 @@ public class StepPotion extends Item{
 	}
 
 	@Override
-	public String getUsageMessage() {
+	public String getEffectMessage() {
 		// TODO Auto-generated method stub
 		return null;
 	}

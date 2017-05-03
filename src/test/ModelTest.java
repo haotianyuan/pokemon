@@ -17,7 +17,7 @@ import Trainer.Trainer;
 public class ModelTest {
 	@Test
 	public void GameModelTest() {
-		GameModel model = new GameModel();
+		GameModel model = new GameModel("aa", MissionType.TWENTYPOKEMON);
 		Trainer newTrn = new Trainer("lulu");
 		model.setTrainer(newTrn);
 		assertTrue(model.getTrainer().getID().equals("lulu"));

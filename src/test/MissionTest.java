@@ -14,7 +14,7 @@ public class MissionTest {
 	public void test() {
 		Mission a = new Mission(MissionType.FIFTYPOKEMON);
 		Mission b = new Mission(MissionType.FINDLENGEND);
-		Mission c = new Mission(MissionType.FIVERARE);
+		Mission c = new Mission(MissionType.FIVEEPIC);
 		Mission d = new Mission(MissionType.STANDARDLADDER);
 		Mission e = new Mission(MissionType.TEST);
 		Mission f = new Mission(MissionType.THIRTYPOKEMON);

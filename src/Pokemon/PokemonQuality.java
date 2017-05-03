@@ -11,10 +11,10 @@
 package Pokemon;
 
 public enum PokemonQuality {
-	COMMON(90, 15, 54), 
-	UNCOMMON(70, 12, 30), 
-	RARE(50, 9, 10),
-	EPIC(20, 6, 5),
+	COMMON(70, 15, 54), 
+	UNCOMMON(50, 12, 30), 
+	RARE(30, 9, 10),
+	EPIC(10, 6, 5),
 	LEGENDARY(1, 3, 1);
 	
 	private final double basicCaptureRate;

@@ -2,7 +2,7 @@ package Map;
 
 import java.awt.Point;
 
-public class Map_Test extends Map{
+public class Map_Test extends MapPokemon{
 	
 	public Map_Test() {
 		super(129, 129);
