@@ -175,12 +175,13 @@ public class MainGameView extends JPanel implements Observer{
 	private int trainerMoveCounter;
 	public final static int FramePerMove = 16;
 	public final static int delayInMillis = 20;
+	public final static int MoveDelayInMillis = 15;
 	private static final double PixelPerFrame = 2;
 	private boolean startMoving = false;
 	private boolean endMoving = true;
 	
 	private void startMoveTimer() {
-		moveTimer = new Timer(delayInMillis, new moveTimerListener());
+		moveTimer = new Timer(MoveDelayInMillis, new moveTimerListener());
 		startMoving = true;
 		endMoving = false;
 		moveTimer.start();
@@ -875,7 +876,7 @@ public class MainGameView extends JPanel implements Observer{
 	    	BufferedInputStream bis = new BufferedInputStream(fis);
 	    	MyAudioPlayer = new BasicPlayer();
 	    	MyAudioPlayer.open(bis);
-	    	MyAudioPlayer.play();;
+	    	MyAudioPlayer.play();
 	    } 
 	    catch (Exception e) {
 	        System.err.printf("%s\n", e.getMessage());
@@ -919,6 +920,7 @@ public class MainGameView extends JPanel implements Observer{
 	private int generalCounter;
 
 	public void startGeneralTimer() {
+		playMainGameBackgroundMusic();
 		generalCounter = 0;
 		generalTimer = new Timer(delayInMillis * 50, new generalTimerListener());
 		generalTimer.start();
@@ -933,10 +935,7 @@ public class MainGameView extends JPanel implements Observer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// reset the counter when go beyond 50
-			if (generalCounter == 0){
-				playMainGameBackgroundMusic();
-			}	
-			else if (MyAudioPlayer.getStatus()  == 2 && curBackMusicFileName.equals("route_101.mp3")){
+			if (MyAudioPlayer.getStatus()  == 2){
 				playMainGameBackgroundMusic();
 				
 			}		

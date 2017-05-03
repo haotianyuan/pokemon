@@ -50,6 +50,7 @@ public class GameModel extends Observable implements Serializable{
 	
 	public GameModel(){
 		initiateMap();
+		// test part
 		curTrainer = new Trainer("T.M.T.");
 		setLocation(22, 31);
 		xPrevCoords = 22;
@@ -383,6 +384,10 @@ public class GameModel extends Observable implements Serializable{
 		
 	public Trainer getTrainer(){
 		return this.curTrainer;
+	}
+	
+	public void createTrainer(String name){
+		curTrainer = new Trainer(name);
 	}
 	
 	public void update(){

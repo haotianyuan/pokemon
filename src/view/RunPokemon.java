@@ -2,9 +2,12 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.ComponentOrientation;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -35,6 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.RowSorter;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
@@ -61,8 +65,9 @@ public class RunPokemon extends JFrame {
 	private String SAVEFILENAME_GAME = "PokemonGame.ser";
 		
 	// declare the main window
-	private final static int DefaultHeight = 1200;
-	private final static int DefaultWidth = 800;
+	private final static int DefaultHeight = 720;
+	private final static int DefaultWidth = 1280;
+	
 	private JLabel statusBar;
 	private JLabel missionBoard;
 	private JTable inventoryTable;
@@ -75,8 +80,9 @@ public class RunPokemon extends JFrame {
 	
 	
 	// declare the main game view
+	private JDialog dialog;
 	private JPanel currentView;
-	private MissionType SelectedMissionType;
+	private MissionType SelectedMissionType = MissionType.STANDARDLADDER;	// default mission type
 	
 	private final static int View_OFFSET_X = 25; 
 	private final static int View_OFFSET_Y = 25; 
@@ -96,6 +102,7 @@ public class RunPokemon extends JFrame {
 	private boolean isWin;		// flag to check if the game is win
 	private boolean isLost;		// flag to check if the game is lost
 	private boolean isBattle;	// flag to check if it was doing battle
+	private String trainerName = "Ash";	// default name
 	
 	// main function
 	public static void main(String[] args) {
@@ -104,7 +111,8 @@ public class RunPokemon extends JFrame {
 	}
 	
 	// constructor
-	public RunPokemon(){		
+	public RunPokemon(){	
+		loadImage();
 		int userPrompt = JOptionPane.showConfirmDialog(null, "Do you want to start with presvious saved data?");
 		// if the user choose yes, load the saved file
 		if (userPrompt == JOptionPane.YES_OPTION) {
@@ -112,6 +120,7 @@ public class RunPokemon extends JFrame {
 			File saveFile = new File(SAVEFILENAME_GAME);
 			if (saveFile.exists()){
 				loadData();
+				initiatePokemonGame();
 			}
 			else{
 				JOptionPane.showMessageDialog(null, "You dont have a saved file",
@@ -123,32 +132,13 @@ public class RunPokemon extends JFrame {
 		
 		// if the user choose no, use default
 		else if (userPrompt == JOptionPane.NO_OPTION) {
-			gameModel = new GameModel();
-			setUpMission();
-			/*
-			Object[] options = {"25 Steps", "50 steps 5 pokemon"};
-			userPrompt = JOptionPane.showOptionDialog(null, "Press Yes for 50 step limit 5 pokemon caught to win, no for 25 step to win",
-													"Choose Mission",     
-													JOptionPane.YES_NO_CANCEL_OPTION,
-												    JOptionPane.QUESTION_MESSAGE,
-												    null,	//Icon
-												    options,
-												    options[0]);
-			if (userPrompt == 0){
-				gameModel.setMission(new Mission(MissionType.STANDARDLADDER));
-			}
-			else{
-				gameModel.setMission(new Mission(MissionType.TEST));
-			}
-			*/
+			startNewGame();
+			//setUpMission();
 		}
 		// chosen cancel
 		else {
 			System.exit(0);
 		}
-		initiatePokemonGame();
-		//timer = new Timer(delayInMillis, new MoveListener());
-		//timer.start();
 		// check if encounter a pokemon
 		// start the battle
 		if (gameModel.getTrainer().getCurEncounterPokemon() != null){
@@ -159,7 +149,6 @@ public class RunPokemon extends JFrame {
 	}
 		
 	private void initiatePokemonGame(){
-				loadImage();
 				setUpMainWindow();
 				setUpBattleView();
 				setUpGameView();		
@@ -171,8 +160,8 @@ public class RunPokemon extends JFrame {
 				setUpButtons();
 
 				addObservers();
-				setViewTo(mainGamePanel);	// default starting view
 				mainGamePanel.startGeneralTimer();
+				setViewTo(mainGamePanel);	// default starting view
 	}
 	
 	private void setViewTo(JPanel newView) {
@@ -187,15 +176,93 @@ public class RunPokemon extends JFrame {
 		validate();
 	}
 	
-	/***************** Mission Selector *******************/
-	private final void setUpMission(){		
-		JDialog dialog = new JDialog(this, "Mission Selector", true);
-		JPanel MissionSelector = new JPanel(new BorderLayout());
-		MissionSelector.setLayout(new BorderLayout());
-		MissionSelector.setBorder(new EmptyBorder(10, 10, 10, 10));
-		MissionSelector.add(new JLabel("Please Select a Mission to Start. You Can Move Mouse Over the Button To See Details"), BorderLayout.NORTH);
+	/*****************  Game Starter *****************/
+	
+	/****************** Create Trainer ******************/
+	private void startNewGame(){
+		gameModel = new GameModel();
+		dialog = new JDialog(this, "Trainer Creator", true);
+		JPanel TrainerCreatorPanel = new JPanel(new BorderLayout()){
+	
+			private static final long serialVersionUID = -8811191521258893558L;
+
+			//this.setPreferredSize(new Dimension(100, 600));
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(getLogginScreenTexture(), 0, 0, null);
+            }
+		};
+		TrainerCreatorPanel.setPreferredSize(new Dimension(480, 320));
+		//TrainerCreatorPanel.setLayout(new BorderLayout());
+		TrainerCreatorPanel.setBorder(new EmptyBorder(140, 40, 80, 10));
 		
-		JPanel buttonPanel_0 = new JPanel(new FlowLayout());
+		JButton inputButton = new JButton("Create");
+		inputButton.setPreferredSize(new Dimension(80, 20));
+		JTextArea inputNameArea = new JTextArea("Trainer Name");
+		inputNameArea.setPreferredSize(new Dimension(80, 20));
+		inputNameArea.setBackground(Color.WHITE);
+		inputNameArea.selectAll();
+		
+		inputButton.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent ae){
+						if (inputNameArea.getText() != null || inputNameArea.getText() != ""){
+							trainerName = inputNameArea.getText();
+							gameModel.createTrainer(trainerName);
+						}
+						dialog.setVisible(false);
+						setUpMission();
+					}
+				});
+		
+		JPanel LeftBox = new JPanel(new BorderLayout());
+		
+		LeftBox.setBorder(new EmptyBorder(20, 5, 20, 5));
+		LeftBox.setOpaque(false);
+		LeftBox.add(inputNameArea,BorderLayout.NORTH);
+		LeftBox.add(inputButton,BorderLayout.SOUTH);
+		LeftBox.setPreferredSize(new Dimension(100, 20));
+		
+		TrainerCreatorPanel.add(LeftBox, BorderLayout.WEST);
+		
+		dialog.setContentPane(TrainerCreatorPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+	}
+	
+	/***************** Mission Selector *******************/
+	
+	private final void setUpMission(){		
+		dialog = new JDialog(this, "Mission Selector", true);
+		JPanel LogginPanel = new JPanel(new BorderLayout()){
+
+			private static final long serialVersionUID = 6739252419993318909L;
+
+			//this.setPreferredSize(new Dimension(100, 600));
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(getLogginScreenTexture(), 0, 0, null);
+            }
+		};
+		//LogginPanel.setBounds(8, 15, LogginScreen_Width, LogginScreen_Height);
+		LogginPanel.setPreferredSize(new Dimension(480, 320));
+		LogginPanel.setLayout(new BorderLayout());
+		LogginPanel.setBorder(new EmptyBorder(15, 40, 130, 10));
+		
+		// set up the label for the loggin information
+		JLabel logginInfo = new JLabel("", SwingConstants.LEFT);
+		logginInfo.setFont(new Font("Times New Roman", Font.BOLD, 14));
+		logginInfo.setForeground(Color.WHITE);
+		//logginInfo.setBounds(5, 15, 200, 80);
+		logginInfo.setText("<html>Please Select a Mission to Start<pre> You Can Move Mouse Over the Buttons<br>   To See Details</pre></html>");
+		LogginPanel.add(logginInfo, BorderLayout.NORTH);
+		
+		// first line of button
+		JPanel buttonPanel_0 = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		
 		// Define button for choose mission
 		JButton m0 = new JButton(Difficulty.TEST.name());
@@ -203,7 +270,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.TEST;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -212,7 +281,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.STANDARDLADDER;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -221,7 +292,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.TWENTYPOKEMON;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -230,7 +303,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.THIRTYPOKEMON;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -240,14 +315,16 @@ public class RunPokemon extends JFrame {
 		buttonPanel_0.add(m3);
 					
 		// second line of button
-		JPanel buttonPanel_1 = new JPanel(new FlowLayout());
+		JPanel buttonPanel_1 = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		
 		JButton m4 = new JButton(Difficulty.HARD.name());
 		m4.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.FIFTYPOKEMON;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -256,7 +333,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.FIVEEPIC;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -265,7 +344,9 @@ public class RunPokemon extends JFrame {
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
 						SelectedMissionType = MissionType.STANDARDLADDER;
+						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
+						initiatePokemonGame();
 					}
 				});
 		
@@ -273,16 +354,16 @@ public class RunPokemon extends JFrame {
 		buttonPanel_1.add(m5);
 		buttonPanel_1.add(m6);
 
-		
-		MissionSelector.add(buttonPanel_0, BorderLayout.CENTER);
-		MissionSelector.add(buttonPanel_1, BorderLayout.SOUTH);
+		buttonPanel_0.setOpaque(false);
+		buttonPanel_1.setOpaque(false);
+		LogginPanel.add(buttonPanel_0, BorderLayout.CENTER);
+		LogginPanel.add(buttonPanel_1, BorderLayout.SOUTH);
 	
 		
-		dialog.setContentPane(MissionSelector);
+		dialog.setContentPane(LogginPanel);
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-        gameModel.setMission(new Mission(SelectedMissionType));
 	}
 	
 	/********************* Add Component Into Pane ***********************/
@@ -290,7 +371,8 @@ public class RunPokemon extends JFrame {
 	public void setUpMainWindow(){
 		// define the location of the main window
 		this.setTitle("Pokemon Safari Zone - Beta v0.9");
-		this.setSize(DefaultHeight, DefaultWidth);
+		this.setPreferredSize(new Dimension(DefaultWidth, DefaultHeight));
+		this.setResizable(false);
 		this.setLocationRelativeTo(null); 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setLayout(null);
@@ -847,6 +929,7 @@ public class RunPokemon extends JFrame {
 		loadTrainerTexture();
 		loadBagTexture();
 		loadPokedexTexture();
+		loadLogScreen();
 	}
 	
 	private void loadTrainerTexture() {
@@ -927,6 +1010,54 @@ public class RunPokemon extends JFrame {
 				Pokedex_Width, Pokedex_Height);
 	}	
 	
+	/******************* Draw Loggin Screen ********************/
+	
+	private static BufferedImage LogginScreen;
+	private final static String LogginScreenFileName = "LogginScreen_2.png";
+	private final static int LogginScreen_Width = 480;
+	private final static int LogginScreen_Height = 320;
+	
+	private void loadLogScreen(){
+		String filePath = TextureFolderPath + LogginScreenFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File logFile = new File(filePath);
+			LogginScreen = ImageIO.read(logFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private BufferedImage getLogginScreenTexture(){
+		return LogginScreen.getSubimage(0 , 0, LogginScreen_Width, LogginScreen_Height);
+	}
+	
+	/******************* Overall Background Screen ********************/
+	
+	private static BufferedImage BackgroundScreen;
+	private final static String BackgroundScreenFileName = "LogginScreen_2.png";
+	private final static int BackgroundScreen_Width = 480;
+	private final static int BackgroundScreen_Height = 320;
+	
+	private void loadBackground(){
+		String filePath = TextureFolderPath + BackgroundScreenFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File logFile = new File(filePath);
+			BackgroundScreen = ImageIO.read(logFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private BufferedImage getBackgroundScreenTexture(){
+		return BackgroundScreen.getSubimage(0 , 0, BackgroundScreen_Width, BackgroundScreen_Height);
+	}
+	
 	
 	/*
 	 * *************************************** *
@@ -934,6 +1065,8 @@ public class RunPokemon extends JFrame {
 	 * *************************************** *
 	 */
 	
+	
+	/***************** Loggin Timer ******************/
 
 	
 }
