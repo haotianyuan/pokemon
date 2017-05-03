@@ -340,14 +340,14 @@ public abstract class Pokemon implements TableModel, Serializable{
 			return "Basic Capture Chance";
 		}
 		if (row == 6 && col == 1){
-			return this.getBasicCapRate();
+			return this.getBasicCapRate() * 100 + "%";
 		}
 		
 		if (row == 7 && col == 0){
 			return "Basic Run Chance";
 		}
 		if (row == 7 && col == 1){
-			return this.getBasicRunChance();
+			return this.getBasicRunChance() * 100 + "%";
 		}
 		
 		if (row == 8 && col == 0){
@@ -361,14 +361,14 @@ public abstract class Pokemon implements TableModel, Serializable{
 			return "Current Capture Chance";
 		}
 		if (row == 9 && col == 1){
-			return this.getCurCapRate();
+			return this.getCurCapRate() * 100 + "%";
 		}
 		
 		if (row == 10 && col == 0){
 			return "Current Run Chance";
 		}
 		if (row == 10 && col == 1){
-			return this.getCurRunChance();
+			return this.getCurRunChance() * 100 + "%";
 		}
 		
 		if (row == 11 && col == 0){
@@ -399,7 +399,7 @@ public abstract class Pokemon implements TableModel, Serializable{
 		
 	}
 	
-	
+	public abstract String getIntro();
 	
 	
 }

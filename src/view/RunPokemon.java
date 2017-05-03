@@ -10,6 +10,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -61,6 +62,7 @@ import Mission.Difficulty;
 import Mission.Mission;
 import Mission.MissionType;
 import Pokemon.Pokedex;
+import Pokemon.Pokemon;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 import javazoom.jlgui.basicplayer.BasicPlayer;
@@ -76,8 +78,8 @@ public class RunPokemon extends JFrame {
 	private final static int DefaultHeight = 720;
 	private final static int DefaultWidth = 600;
 	
-	private JLabel statusBar;
-	private JLabel missionBoard;
+	//private JLabel statusBar;
+	//private JLabel missionBoard;
 	
 	// declare the main game view
 	private JDialog dialog;
@@ -745,12 +747,20 @@ public class RunPokemon extends JFrame {
 	}
 	
 	// show the mission board
-	public JScrollPane setUpPokedexTable(){
-		pokedexTable = new JTable(gameModel.getMission());
-		RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(gameModel.getMission());
+	public JScrollPane setUpPokedexTable(Pokemon p){	
+		if (p == null){
+			return null;
+		}	
+
+		pokedexTable = new JTable(p);
+		RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(p);
 		pokedexTable.setRowSorter(sorter);
 		pokedexTable.setOpaque(false);
-		pokedexTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {{
+		pokedexTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+
+			private static final long serialVersionUID = 321653868345372859L;
+
+		{
             setOpaque(false);
             setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
         }});
@@ -758,14 +768,14 @@ public class RunPokemon extends JFrame {
 		//centerRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
 		//missionTable.getColumn("Requirement").setCellRenderer( centerRenderer );		
 		//missionTable.getColumn("Progressing").setCellRenderer( centerRenderer );
-		missionTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-		missionTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-		missionTable.setAutoCreateColumnsFromModel(true);
+		pokedexTable.getColumnModel().getColumn(0).setPreferredWidth(60);
+		pokedexTable.getColumnModel().getColumn(1).setPreferredWidth(60);
+		//pokedexTable.setAutoCreateColumnsFromModel(true);
 		
-		JScrollPane pane = new JScrollPane(missionTable);
+		JScrollPane pane = new JScrollPane(pokedexTable);
 		pane.setOpaque(false);
 		pane.getViewport().setOpaque(false);
-		pane.setBounds(View_OFFSET_X, View_OFFSET_Y, TableWidth, TableHeight);
+		pane.setBounds(View_OFFSET_X, View_OFFSET_Y, TableWidth / 2, TableHeight - 100);
 		//getContentPane().add(pane);
 		return pane;
 	}
@@ -795,48 +805,7 @@ public class RunPokemon extends JFrame {
 			
 		}
 	}
-	
-	private class inspectPokemonButtonListener implements ActionListener{
 
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
-				//return;
-			}
-			Object obj = ((JButton) e.getSource());
-			if (obj == pokedexButton){
-			    JFrame frame = new JFrame();
-			    frame.setLayout(new BorderLayout());
-			    JScrollPane newPane = setUpPokemonTable();
-			    frame.add(newPane);
-			    frame.pack();
-			    frame.setLocationRelativeTo(null);
-			    frame.setVisible(true);
-			}
-			
-		}
-	}
-	
-	private class inspectEncounterPokemonButtonListener implements ActionListener{
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
-				//return;
-			}
-			Object obj = ((JButton) e.getSource());
-			if (obj == pokedexButton){
-			    JFrame frame = new JFrame();
-			    frame.setLayout(new BorderLayout());
-			    JScrollPane newPane = setUpPokemonTable();
-			    frame.add(newPane);
-			    frame.pack();
-			    frame.setLocationRelativeTo(null);
-			    frame.setVisible(true);
-			}
-			
-		}
-	}
 	
 	
 	/*************** Inventory Button ****************/
@@ -900,7 +869,8 @@ public class RunPokemon extends JFrame {
 			
 		}
 	}
-		
+	
+	/*
 	// add the button listener for the item detail button
 	private class checkItemButtonListener implements ActionListener {
 
@@ -922,6 +892,7 @@ public class RunPokemon extends JFrame {
 			
 		}	
 	}
+	*/
 	
 	/*
 	 * *************************************** *
@@ -1084,10 +1055,19 @@ public class RunPokemon extends JFrame {
 	
 	private class pokedexInspectButtonListener implements ActionListener {
 
+
 		@Override
-		public void actionPerformed(ActionEvent arg0) {
-			// TODO Auto-generated method stub
+		public void actionPerformed(ActionEvent e) {
+			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
+				//return;
+			}
+			if (currentView != battlePanel){
+				return;
+			}
 			
+			if (gameModel.getTrainer().getCurEncounterPokemon() != null && currentView == battlePanel){
+				popPokedexBoard(gameModel.getTrainer().getCurEncounterPokemon());
+			}
 		}
 		
 	}
@@ -1112,14 +1092,100 @@ public class RunPokemon extends JFrame {
 	private class pokemonEncounterInspectButtonListener implements ActionListener {
 
 		@Override
-		public void actionPerformed(ActionEvent arg0) {
-			if (gameModel.getTrainer().getCurEncounterPokemon() == null){
-				return;
+		public void actionPerformed(ActionEvent e) {
+			if (!battlePanel.InteractEnable() && !mainGamePanel.InteractEnable()){
+				//return;
 			}
-			// TODO : DISPLAY THE POKEMON
+			
+			// check if there is any row selected
+			if (pokemonTable.getSelectionModel().isSelectionEmpty()){
+				return;
+			}			
+			// interact with the selected row
+			int index = pokemonTable.convertRowIndexToModel(pokemonTable.getSelectedRow());
+			
+			Pokemon p = gameModel.getTrainer().getPokemonCollection().getPokemon(index);	
+			popPokedexBoard(p);
 			
 		}
+	}
 		
+	private void popPokedexBoard(Pokemon p){
+		dialog = new JDialog(this, "Pokemon Information", true);
+		dialog.addWindowListener(new WindowListener(){
+
+			@Override
+			public void windowActivated(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowClosed(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				//stopLogginTimer();
+				//requestFocus();
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowIconified(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void windowOpened(WindowEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+ 
+		JPanel Panel = new JPanel(new BorderLayout()){
+	
+			private static final long serialVersionUID = -8811191521258893558L;
+
+			//this.setPreferredSize(new Dimension(100, 600));
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(getPokedexBackgroundTexture(), 0, 0, null);
+                g.drawImage(drawPokemonA(p.getSpecy()), 80, 160, null);
+                g.drawImage(drawPokemonB(p.getSpecy()), 240, 160, null);
+            }
+		};
+		Panel.setPreferredSize(new Dimension(PokedexBackground_Width, PokedexBackground_Height));
+	    JScrollPane newPane = setUpPokedexTable(p);
+	    Panel.setBorder(new EmptyBorder(5, 10, 5, 10 ));
+		Panel.add(newPane, BorderLayout.EAST);
+		JTextArea textArea = new JTextArea(p.getIntro());
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
+		textArea.setOpaque(false);
+		
+		Panel.add(textArea, BorderLayout.SOUTH);
+		
+		dialog.setContentPane(Panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
 	}
 	
 	
@@ -1131,7 +1197,7 @@ public class RunPokemon extends JFrame {
 	public void setUpUseItemButton(){
 		ImageIcon icon = new ImageIcon(TextureFolderPath + "useicon.png");
 		useItemButton = new JButton(icon);
-		useItemButton.setBounds(View_OFFSET_X + TableWidth + 46, DefaultGameHeight + View_OFFSET_Y + Pokedex_Height + 60, 
+		useItemButton.setBounds(View_OFFSET_X + TableWidth + 6, DefaultGameHeight + View_OFFSET_Y + Pokedex_Height + 60, 
 								TableButton_Width, TableButton_Height);
 		useItemButton.setOpaque(false);
 		useItemButton.setContentAreaFilled(false);
@@ -1318,12 +1384,20 @@ public class RunPokemon extends JFrame {
 			//missionBoard.setText("<html>YOU WIN<br>&nbsp;&nbsp;&nbsp;THE GAME IS OVER</html>");
 			isWin = true;
 			isOver = true;
+			mainGamePanel.stopGeneralTimer();
+			mainGamePanel.stopPlayCurSound();
+			this.setVisible(false);
+			this.popMissionInfoBoard();
+			curBackMusicFileName = "end_victory.mp3";
+			this.playBackgroundMusic();
 		}
 		
 		if (gameModel.isLost()){
 			//missionBoard.setText("<html>YOU LOST<br>&nbsp;&nbsp;&nbsp;THE GAME IS OVER</html>");
 			isLost = true;
 			isOver = true;
+			this.setVisible(false);
+			this.popMissionInfoBoard();
 		}
 	}
 	
@@ -1332,14 +1406,19 @@ public class RunPokemon extends JFrame {
 		int hour = rightNow.get(Calendar.HOUR_OF_DAY);
 		ItemType item = gameModel.generateLoot( hour % 6 * 0.08 + 0.4);
 		if (item != null){
+			if (gameModel.getTrainer().justCaught){
+				playItemLootMusic();
+			}
 			gameModel.getTrainer().addItem(item);
 			
 			// show loot notification
 			JOptionPane.showMessageDialog(this, "YOU FOUND '" + item.name() + "' FROM THE BATTLEFIELD");
-			inventoryTable.repaint();
-			pokemonTable.repaint();
-			trainerTable.repaint();
+			if (curTablePane != null){
+				curTablePane.repaint();
+			}
 		}
+		
+
 		
 		// another loot chance if just caught
 		if (gameModel.getTrainer().justCaught){
@@ -1469,6 +1548,7 @@ public class RunPokemon extends JFrame {
 		loadPokemonTexture();
 		loadItemTexture();
 		loadMissionBackground();
+		loadPokedexBackground();
 	}
 	
 	private void loadTrainerTexture() {
@@ -1610,13 +1690,37 @@ public class RunPokemon extends JFrame {
 	}
 	
 	
+	/******************* Draw Pokedex Background ********************/
+	private static BufferedImage PokedexBackgroundSheet;
+	private final static String PokedexBackgroundFileName = "pokedex_background.png";
+	private final static int PokedexBackground_Width = 480;
+	private final static int PokedexBackground_Height = 360;
+	
+	private void loadPokedexBackground(){
+		String filePath = TextureFolderPath + PokedexBackgroundFileName;
+		
+		// try to open the file of the trainer
+		try{
+			File logFile = new File(filePath);
+			PokedexBackgroundSheet = ImageIO.read(logFile);
+		}
+		catch (IOException e){
+			System.out.println("Could not find: " + filePath);
+		}
+	}
+	
+	private BufferedImage getPokedexBackgroundTexture(){
+		return PokedexBackgroundSheet.getSubimage(0 , 0, PokedexBackground_Width, PokedexBackground_Height);
+	}
+	
+	
 	/***************** Loggin Timer ******************/
 	////////////Item Timer ////////////
 	private Timer logginTimer;
 	private int logginCounter;
 
 	public void startLogginTimer() {
-		playLogginMusic();
+		playBackgroundMusic();
 		logginCounter = 0;
 		logginTimer = new Timer(delayInMillis * 20, new generalTimerListener());
 		logginTimer.start();
@@ -1635,8 +1739,8 @@ public class RunPokemon extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// reset the counter when go beyond 50
-			if (MyAudioPlayer.getStatus()  == 2){
-				playLogginMusic();
+			if (MyBackgroundMusicPlayer.getStatus()  == 2){
+				playBackgroundMusic();
 			}		
 			logginCounter++;
 		}
@@ -1694,6 +1798,7 @@ public class RunPokemon extends JFrame {
 		}
 		
 	}
+	
 	// define the upper left point for all pokemon on the sheet
 	private static ArrayList<Point> PokemonOFFSET_A;	// OFFSET list for pokemon first image
 	private static ArrayList<Point> PokemonOFFSET_B;	// OFFSET list for pokemon second image
@@ -1732,9 +1837,21 @@ public class RunPokemon extends JFrame {
 		
 	}
 	
+	private Point getPokemonOFFSET_B(Pokedex type){
+		return PokemonOFFSET_B.get(type.getIndex() - 1);
+	}
+	
+	
 	private BufferedImage drawPokemonA(Pokedex type){
 		// get the offset point
 		Point p = this.getPokemonOFFSET_A(type);
+		return pokemonSheet.getSubimage(p.x, p.y, 
+				Pokemon_Width, Pokemon_Height);
+	}
+	
+	private BufferedImage drawPokemonB(Pokedex type){
+		// get the offset point
+		Point p = this.getPokemonOFFSET_B(type);
 		return pokemonSheet.getSubimage(p.x, p.y, 
 				Pokemon_Width, Pokemon_Height);
 	}
@@ -1769,27 +1886,27 @@ public class RunPokemon extends JFrame {
 	 *  	  SoundTrack Creator Below         *
 	 * *************************************** *
 	 */
-	private BasicPlayer MyAudioPlayer;
-	private Thread playerThread;
+	private BasicPlayer MyBackgroundMusicPlayer;
+	private Thread backgroundPlayerThread;
 	private static String curBackMusicFileName = "loggin_music.mp3";
 	private final static String soundtrackFolder = "soundtrack" + File.separator;
 	
-	public void playLogginMusic() {
+	public void playBackgroundMusic() {
 	    try {
 	    	stopPlayCurSound();
 	    	File file = new File(soundtrackFolder + curBackMusicFileName);
-	    	MyAudioPlayer = new BasicPlayer();
-	    	MyAudioPlayer.open(file);
+	    	MyBackgroundMusicPlayer = new BasicPlayer();
+	    	MyBackgroundMusicPlayer.open(file);
 	    } 
 	    catch (Exception e) {
 	        System.err.printf("%s\n", e.getMessage());
 	    }
 
-	    playerThread = new Thread() {
+	    backgroundPlayerThread = new Thread() {
 	    	@Override
 	    	public void run() {
 	    		try {
-	    			MyAudioPlayer.play();
+	    			MyBackgroundMusicPlayer.play();
 	    		} 
 	    		catch (Exception e) {
 	    			System.err.printf("%s\n", e.getMessage());
@@ -1797,23 +1914,68 @@ public class RunPokemon extends JFrame {
 	    	}
 	    };
 	    
-	    playerThread.start();
+	    backgroundPlayerThread.start();
 	}
 	
 	public void stopPlayCurSound(){
-		if (MyAudioPlayer != null) {
+		if (MyBackgroundMusicPlayer != null) {
 			try {
-				MyAudioPlayer.stop();
+				MyBackgroundMusicPlayer.stop();
 			} catch (BasicPlayerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			};
 		}
 		
-		if (playerThread != null){
-			playerThread.interrupt();
+		if (backgroundPlayerThread != null){
+			backgroundPlayerThread.interrupt();
 		}
 	}
 	
+	/************* Play Item Get ***************/
+	private BasicPlayer MyItemLootPlayer;
+	private Thread ItemLootPlayerThread;
+	private static String ItemLootFileName = "obtain_item.mp3";
+	
+	public void playItemLootMusic() {
+	    try {
+	    	stopPlayCurItemLoot();
+	    	File file = new File(soundtrackFolder + ItemLootFileName);
+	    	MyItemLootPlayer = new BasicPlayer();
+	    	MyItemLootPlayer.open(file);
+	    } 
+	    catch (Exception e) {
+	        System.err.printf("%s\n", e.getMessage());
+	    }
+
+	    ItemLootPlayerThread = new Thread() {
+	    	@Override
+	    	public void run() {
+	    		try {
+	    			MyItemLootPlayer.play();
+	    		} 
+	    		catch (Exception e) {
+	    			System.err.printf("%s\n", e.getMessage());
+	    		}
+	    	}
+	    };
+	    
+	    ItemLootPlayerThread.start();
+	}
+	
+	public void stopPlayCurItemLoot(){
+		if (MyItemLootPlayer != null) {
+			try {
+				MyItemLootPlayer.stop();
+			} catch (BasicPlayerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			};
+		}
+		
+		if (ItemLootPlayerThread != null){
+			ItemLootPlayerThread.interrupt();
+		}
+	}	
 }
 

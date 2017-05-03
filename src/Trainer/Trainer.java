@@ -73,6 +73,10 @@ public class Trainer implements TableModel, Serializable{
 		return this.curEncounterPokemon;
 	}
 	
+	public void resetCurEncounterPokemon(){
+		curEncounterPokemon = null;
+	}
+	
 	public void setLocation(int x, int y){
 		xCoords = x;
 		yCoords = y;
@@ -262,7 +266,7 @@ public class Trainer implements TableModel, Serializable{
 		if (row == 5 && col == 0){
 			return "Common Pokemon";
 		}
-		if (row == 5 && col == 0){
+		if (row == 5 && col == 1){
 			return this.pokemonCollection.getCommonNum();
 		}
 		

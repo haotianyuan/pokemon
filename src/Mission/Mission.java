@@ -28,7 +28,7 @@ public class Mission implements TableModel, Serializable{
 		this.type = mission;
 		// record when 500 step down
 		if (mission == MissionType.STANDARDLADDER){
-			this.stepCap = 99999;
+			this.stepCap = 1000;
 			this.initBall = 100;
 			this.commonRequirement = 0;
 			this.uncommonRequirement = 0;
@@ -155,8 +155,32 @@ public class Mission implements TableModel, Serializable{
 				return false;
 			}
 		}
+		else if (type == MissionType.FIFTYPOKEMON){
+			if (curTrainer.getPokemonCollection().getSize() >= this.getTotalRequirement()){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
 		else if (type == MissionType.THIRTYPOKEMON){
 			if (curTrainer.getPokemonCollection().getSize() >= this.getTotalRequirement()){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else if (type == MissionType.FIVEEPIC){
+			if (curTrainer.getPokemonCollection().getEpicNum() >= this.epicRequirement){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else if (type == MissionType.FINDLENGEND){
+			if (curTrainer.getPokemonCollection().getLegendNum() >= this.legendRequirement){
 				return true;
 			}
 			else{

@@ -11,4 +11,10 @@ public class Dratini extends Pokemon{
 		super(name, Pokedex.Dratini);
 	}
 
+	@Override
+	public String getIntro() {
+		// TODO Auto-generated method stub
+		return "Dratini is a serpentine Pok¨¦mon with a blue body and a white underside. It has white, three-pronged fins on the sides of its head and a white bump on its forehead. Above its large, round, white snout are oval, purple eyes.";
+	}
+
 }

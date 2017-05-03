@@ -175,7 +175,7 @@ public class MainGameView extends JPanel implements Observer{
 	private int trainerMoveCounter;
 	public final static int FramePerMove = 16;
 	public final static int delayInMillis = 20;
-	public final static int MoveDelayInMillis = 15;
+	public final static int MoveDelayInMillis = 12;
 	private static final double PixelPerFrame = 2;
 	private boolean startMoving = false;
 	private boolean endMoving = true;

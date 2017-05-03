@@ -65,6 +65,11 @@ public class GameModel extends Observable implements Serializable{
 			curTrainer.addItem(ItemType.BALL);
 			curTrainer.addItem(ItemType.ROCK);
 		}
+		
+		curTrainer.getPokemonCollection().addPokemon(new Ekans("E1"));
+		curTrainer.getPokemonCollection().addPokemon(new Dratini("D1"));
+		curTrainer.getPokemonCollection().addPokemon(new Growlithe("G1"));
+		curTrainer.getPokemonCollection().addPokemon(new Pidgey("P1"));
 	}
 		
 	public void setTrainer(Trainer trainer){

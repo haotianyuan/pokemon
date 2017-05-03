@@ -11,4 +11,10 @@ public class Farfetchd extends Pokemon {
 		super(name, Pokedex.Farfetchd);
 	}
 
+	@Override
+	public String getIntro() {
+		// TODO Auto-generated method stub
+		return "Farfetch'd resembles a brown duck with a white underbelly. It has a yellow beak and a V-shaped, black marking on its forehead. It has wings as big as its body, which appear to be prehensile enough to substitute for hands. It has yellow legs with webbed feet.";
+	}
+
 }

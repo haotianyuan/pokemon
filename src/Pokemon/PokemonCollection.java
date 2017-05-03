@@ -28,6 +28,10 @@ public class PokemonCollection implements TableModel, Serializable{
 		this.pokemonList = new ArrayList<Pokemon>();
 	}
 	
+	public Pokemon getPokemon(int index){
+		return this.pokemonList.get(index);
+	}
+	
 	// add new pokemon into the collection
 	public void addPokemon(Pokemon newPokemon){
 		this.pokemonList.add(newPokemon);
