@@ -16,8 +16,6 @@
 
 package Pokemon;
 
-import java.util.ArrayList;
-
 public enum Pokedex {
 	Caterpie("Caterpie", 10, PokemonQuality.COMMON, 100), 
 	Weedle("Weedle", 13, PokemonQuality.COMMON, 100), 

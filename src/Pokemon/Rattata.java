@@ -2,6 +2,11 @@ package Pokemon;
 
 public class Rattata extends Pokemon{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1295066162093073285L;
+
 	public Rattata(String name) {
 		super(name, Pokedex.Rattata);
 	}

@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import Inventory.*;
+import Trainer.Trainer;
 
 public class InventoryTest {
 	@Test
@@ -37,6 +38,12 @@ public class InventoryTest {
 		assertTrue(collection.getColumnName(1).equals("Quantity"));
 		
 		assertTrue(collection.getRowCount() == 7);
+		collection.getValueAt(0, 0);
+		assertTrue(collection.getItem(0) != null);
+		collection.addItem(ItemType.ROCK);
+		collection.addItem(ItemType.BAIT);
+		collection.addItem(ItemType.BAIT);
+		
 	}
 }
  

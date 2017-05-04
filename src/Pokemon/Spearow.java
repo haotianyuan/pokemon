@@ -2,6 +2,11 @@ package Pokemon;
 
 public class Spearow extends Pokemon{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8506725561349427929L;
+
 	public Spearow(String name) {
 		super(name, Pokedex.Spearow);
 	}

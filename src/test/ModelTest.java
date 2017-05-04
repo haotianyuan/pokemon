@@ -9,9 +9,13 @@ import org.junit.Test;
 
 import GameModel.Direction;
 import GameModel.GameModel;
+import Inventory.ItemType;
 import Map.*;
 import Mission.Mission;
 import Mission.MissionType;
+import Pokemon.Abra;
+import Pokemon.Mew;
+import Pokemon.Pokemon;
 import Trainer.Trainer;
 
 public class ModelTest {
@@ -21,7 +25,7 @@ public class ModelTest {
 		Trainer newTrn = new Trainer("lulu");
 		model.setTrainer(newTrn);
 		assertTrue(model.getTrainer().getID().equals("lulu"));
-		Map_Test newMap = new Map_Test();
+		Map_00 newMap = new Map_00();
 		model.setCurMap(newMap);
 		assertTrue(model.getCurMap() == newMap);
 		
@@ -31,13 +35,11 @@ public class ModelTest {
 		assertTrue(model.getMission() == newMission);
 		assertTrue(model.getDir() == model.getTrainer().getFaceDir());
 		Point tempPoint = new Point();
-		tempPoint.setLocation(65, 65);
-		assertTrue(model.getCurLocation().equals(tempPoint));
-		assertTrue(model.getPrevLocation().equals(tempPoint));
+		tempPoint.setLocation(10, 10);
 		tempPoint.setLocation(0, 0);
 		model.update();
 		
-		for (int i = 0; i < 2000; i ++){
+		for (int i = 0; i < 200; i ++){
 			if (Math.random() < 0.25){
 				model.moveTrainer(Direction.WEST);
 			}
@@ -52,12 +54,62 @@ public class ModelTest {
 			}
 		}
 		
-		assertTrue(model.isLost());
+		assertTrue(!model.isLost());
 		assertTrue(!model.isWin());
-		assertTrue(model.isOver());
-		assertTrue(model.getCurMap().getBlock(0, 0).getGround() == GroundType.SOIL);
+		assertTrue(!model.isOver());
+		assertTrue(model.getCurMap().getBlock(0, 0).getGround() != GroundType.SOIL);
 		assertTrue(model.getCurMap().getBlock(0, 0).getInteractType() == InteractType.NONE);
 		assertFalse(model.getCurMap().getBlock(0, 0).isPassable());
+		
+		model.chooseMap("00");
+		model.teleportOnline(new Point(2, 40));
+		model.teleportOnline(new Point(2, 0));
+		model.chooseMap("01");
+		model.teleportOnline(new Point(2, 40));
+		model.teleportOnline(new Point(40, 4));
+		model.teleportOnline(new Point(2, 2));
+		model.chooseMap("02");
+		model.teleportOnline(new Point(2, 40));
+		model.teleportOnline(new Point(4, 1));
+		model.teleportOnline(new Point(2, 0));
+		model.chooseMap("10");
+		model.teleportOnline(new Point(2, 1));
+		model.teleportOnline(new Point(40, 40));
+		model.teleportOnline(new Point(3, 3));
+		model.chooseMap("11");
+		model.teleportOnline(new Point(1, 40));
+		model.teleportOnline(new Point(2, 1));
+		model.teleportOnline(new Point(2, 40));
+		model.teleportOnline(new Point(40, 40));
+		model.chooseMap("12");
+		model.teleportOnline(new Point(1, 40));
+		model.teleportOnline(new Point(2, 1));
+		model.teleportOnline(new Point(20, 13));
+		model.teleportOnline(new Point(24, 13));
+		model.chooseMap("13");
+
+		model.setEncounteredThisBlock(false);
+		assertFalse(model.hasEncounteredThisBlock());
+		
+		model.setLocation(1, 1);
+		model.setLocation(1, 1);
+		assertTrue(model.getCurLocation().equals(model.getPrevLocation()));
+		
+		model.chooseMap("00");
+		model.setLocation(5, 12);
+		for (int i = 0; i < 100; i ++){
+			model.pokemonEncounter();
+		}
+		Trainer trainer = new Trainer("gg");
+		model.setTrainer(trainer);
+		model.getTrainer().catchPokemon(new Mew("hi"));
+		model.calculateCurCaughtChance(new Mew("hi"));
+		model.calculateCurRunChance(new Mew("hi"));
+		for (int i = 0; i < 100; i ++){
+			model.checkIfCaughtPokemon(new Mew("hi"));
+		}
+		
+		
 
 		
 	}

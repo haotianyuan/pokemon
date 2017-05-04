@@ -2,6 +2,11 @@ package Pokemon;
 
 public class Weedle extends Pokemon{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public Weedle(String name) {
 		super(name, Pokedex.Weedle);
 	}
