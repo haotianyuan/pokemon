@@ -46,7 +46,7 @@ public class Map_10 extends MapPokemon{
 	@Override
 	public Point getTeleportPoint(Point portal) {
 		if (portal.y == 1){
-			return (new Point(portal.x, MapSize_Y - 1));
+			return (new Point(portal.x, MapSize_Y - 2));
 		}
 		else if (portal.x == MapSize_X -2){
 			return (new Point(2, portal.y));

@@ -7,8 +7,8 @@ public class Bait extends Item{
 
 	private static final long serialVersionUID = 5729623957892624516L;
 	
-	private double reducedCaptureRate = -0.03;
-	private double reducedRunChance = 0.03;
+	private double reducedCaptureRate = -0.10;
+	private double reducedRunChance = 0.10;
 	
 	// extra
 	//private int extendTurn;

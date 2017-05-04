@@ -78,7 +78,7 @@ public class Mission implements TableModel, Serializable{
 			this.legendRequirement = 0;
 		}
 		else if (mission == MissionType.FINDLENGEND){
-			this.stepCap = 500;
+			this.stepCap = 1000;
 			this.initBall = 30;
 			this.commonRequirement = 0;
 			this.uncommonRequirement = 0;

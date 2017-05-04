@@ -11,11 +11,11 @@
 package Pokemon;
 
 public enum PokemonQuality {
-	COMMON(70, 15, 54), 
-	UNCOMMON(50, 12, 30), 
-	RARE(30, 9, 10),
-	EPIC(10, 6, 5),
-	LEGENDARY(1, 3, 1);
+	COMMON(85, 15, 54), 
+	UNCOMMON(70, 12, 30), 
+	RARE(45, 9, 10),
+	EPIC(25, 6, 5),
+	LEGENDARY(2, 3, 1);
 	
 	private final double basicCaptureRate;
 	private final double runChance;
@@ -47,6 +47,7 @@ public enum PokemonQuality {
 	
 	// TODO: need an algorithm to generate a run chance
 	private double runGenerator(int capRate){
-		return (double)(1 - capRate);
+		//return (double)(1 - capRate);
+		return 0.3;
 	}
 }

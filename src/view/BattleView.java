@@ -1135,7 +1135,12 @@ public class BattleView extends JPanel implements Observer{
 		itemFlyCounter = 0;
 		itemFlyTimer = new Timer(delayInMillis * 4, new itemFlyTimerListener());
 		if (usingItemClass == SafariBall.class){
-			this.playEffectSound(UltimateSoundEffectFileName);
+			if (Math.random() > 0.5){
+				this.playEffectSound(UltimateSoundEffectFileName);
+			}
+			else{
+				this.playEffectSound(UltimateGenjiSoundEffectFileName);
+			}
 		}
 		itemFlyTimer.start();
 	}
@@ -1256,6 +1261,7 @@ public class BattleView extends JPanel implements Observer{
 				// set board info
 				battleInfoBoard.setText("<html>THE WILD POKEMON RUNS AWAY<br>BATTLE END</html>");
 				gameModel.getTrainer().justCaught = false;
+				this.playTransitionAnimation();
 			}
 			else{
 				// set board info
@@ -1789,6 +1795,8 @@ public class BattleView extends JPanel implements Observer{
 	private final static String BaitSoundEffectFileName = "Bait_Effect.wav";
 	private final static String RockSoundEffectFileName = "Rock_Effect.wav";
 	private final static String UltimateSoundEffectFileName = "Ultimate.mp3";
+	private final static String UltimateGenjiSoundEffectFileName = "Ultimate_Genji.mp3";
+	
 	private BasicPlayer curEffectPlayer;
 	private Thread effectThread;
 	

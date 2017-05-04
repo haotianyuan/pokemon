@@ -216,14 +216,14 @@ public abstract class Pokemon implements TableModel, Serializable{
 	}
 	
 	public void incrementAlteredRunChance(double incre){
-		this.reducedRunChance *= 1 + incre;
+		this.reducedRunChance *= (1 + incre);
 		if (this.reducedRunChance > 1){
 			this.reducedRunChance = 1;
 		}
 	}
 	
 	public void decrementAlteredRunChance(double decre){
-		this.reducedRunChance *= 1 - decre;
+		this.reducedRunChance *= (1 - decre);
 		if (this.reducedRunChance < 0){
 			this.reducedRunChance = 0;
 		}

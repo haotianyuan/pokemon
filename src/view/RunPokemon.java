@@ -364,6 +364,7 @@ public class RunPokemon extends JFrame {
 		
 		// Define button for choose mission
 		JButton m0 = new JButton(Difficulty.TEST.name());
+		m0.setToolTipText("A TEST MISSION");
 		m0.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -375,6 +376,7 @@ public class RunPokemon extends JFrame {
 				});
 		
 		JButton m1 = new JButton(Difficulty.CASUAL.name());
+		m1.setToolTipText("1000 STEPS LIMIT, FREE ROLLING");
 		m1.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -386,6 +388,7 @@ public class RunPokemon extends JFrame {
 				});
 		
 		JButton m2 = new JButton(Difficulty.EASY.name());
+		m2.setToolTipText("TWENTY POKEMON REQUIRED WITHIN 500 STEPS");
 		m2.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -397,6 +400,7 @@ public class RunPokemon extends JFrame {
 				});
 		
 		JButton m3 = new JButton(Difficulty.NORMAL.name());
+		m3.setToolTipText("THIRTY POKEMON REQUIRED WITHIN 500 STEPS");
 		m3.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -416,6 +420,7 @@ public class RunPokemon extends JFrame {
 		JPanel buttonPanel_1 = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		
 		JButton m4 = new JButton(Difficulty.HARD.name());
+		m4.setToolTipText("FIFTY POKEMON REQUIRED WITHIN 500 STEPS");
 		m4.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -427,6 +432,7 @@ public class RunPokemon extends JFrame {
 				});
 		
 		JButton m5 = new JButton(Difficulty.VERYHARD.name());
+		m5.setToolTipText("FIVE EPIC POKEMON REQUIRED WITHIN 500 STEPS");
 		m5.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
@@ -438,10 +444,11 @@ public class RunPokemon extends JFrame {
 				});
 		
 		JButton m6 = new JButton(Difficulty.HELL.name());
+		m6.setToolTipText("TRY TO CATCH A LENGENDARY POKEMON");
 		m6.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent ae){
-						SelectedMissionType = MissionType.STANDARDLADDER;
+						SelectedMissionType = MissionType.FINDLENGEND;
 						gameModel.setMission(new Mission(SelectedMissionType));
 						dialog.setVisible(false);
 						stopLogginTimer();
@@ -653,6 +660,7 @@ public class RunPokemon extends JFrame {
 		// get the info icon image
 		ImageIcon icon = new ImageIcon(getTrainerInfoIcon());
 		trainerInfoButton = new JButton(icon);
+		trainerInfoButton.setToolTipText("CHECK THE TRAINER INFORMATION");
 		trainerInfoButton.setBounds(View_OFFSET_X, DefaultGameHeight + View_OFFSET_Y + 5, Trainer_Info_Width, Trainer_Info_Height);
 		trainerInfoButton.setOpaque(false);
 		trainerInfoButton.setContentAreaFilled(false);
@@ -714,6 +722,7 @@ public class RunPokemon extends JFrame {
 		// get the info icon image
 		ImageIcon icon = new ImageIcon(getPokedexIcon());
 		pokedexButton = new JButton(icon);
+		pokedexButton.setToolTipText("CHECK THE POKEDEX INFORMATION");
 		pokedexButton.setBounds(View_OFFSET_X + 20 + 2 * Pokedex_Width, DefaultGameHeight + View_OFFSET_Y + 5, Pokedex_Width, Pokedex_Height);
 		pokedexButton.setOpaque(false);
 		pokedexButton.setContentAreaFilled(false);
@@ -814,6 +823,7 @@ public class RunPokemon extends JFrame {
 		// get the info icon image
 		ImageIcon icon = new ImageIcon(getBagInfoIcon());
 		inventoryButton = new JButton(icon);
+		inventoryButton.setToolTipText("CHECK THE INVENTORY INFORMATION");
 		inventoryButton.setBounds(View_OFFSET_X + 10 + Bag_Info_Width, DefaultGameHeight + View_OFFSET_Y + 5, Bag_Info_Width, Bag_Info_Height);
 		inventoryButton.setOpaque(false);
 		inventoryButton.setContentAreaFilled(false);		
@@ -911,6 +921,7 @@ public class RunPokemon extends JFrame {
 	public void setUpInspectItemButton(){
 		ImageIcon icon = new ImageIcon(TextureFolderPath + "inspect.png");
 		itemInspectButton = new JButton(icon);
+		itemInspectButton.setToolTipText("CHECK THE SELECTED ITEM DESCRIPTION");
 		itemInspectButton.setBounds(View_OFFSET_X + TableWidth + 6, DefaultGameHeight + View_OFFSET_Y + Pokedex_Height + 10, 
 								TableButton_Width, TableButton_Height);
 		itemInspectButton.setOpaque(false);
@@ -946,6 +957,7 @@ public class RunPokemon extends JFrame {
 	public void setUpInspectMissionButton(){
 		ImageIcon icon = new ImageIcon(TextureFolderPath + "inspect.png");
 		missionInspectButton = new JButton(icon);
+		missionInspectButton.setToolTipText("CHECK MISSION PROGRESS");
 		missionInspectButton.setBounds(View_OFFSET_X + TableWidth + 6, DefaultGameHeight + View_OFFSET_Y + Pokedex_Height + 10, 
 				TableButton_Width, TableButton_Height);
 		missionInspectButton.setOpaque(false);
@@ -1043,6 +1055,7 @@ public class RunPokemon extends JFrame {
 	public void setUpInspectPokemonEncounterButton(){
 		ImageIcon icon = new ImageIcon(TextureFolderPath + "inspect2.png");
 		pokemonEncounterInspectButton = new JButton(icon);
+		pokemonEncounterInspectButton.setToolTipText("CHECK THE BATTLED POKEMON");
 		pokemonEncounterInspectButton.setBounds(520, 100, TableButton_Width, TableButton_Height);
 		pokemonEncounterInspectButton.setOpaque(false);
 		pokemonEncounterInspectButton.setContentAreaFilled(false);
@@ -1078,6 +1091,7 @@ public class RunPokemon extends JFrame {
 	public void setUpInspectPokedexButton(){
 		ImageIcon icon = new ImageIcon(TextureFolderPath + "inspect.png");
 		pokedexInspectButton = new JButton(icon);
+		pokedexInspectButton.setToolTipText("CHECK THE SELECTED POKEMON");
 		pokedexInspectButton.setBounds(View_OFFSET_X + TableWidth + 6, DefaultGameHeight + View_OFFSET_Y + Pokedex_Height + 10, 
 				TableButton_Width, TableButton_Height);
 		pokedexInspectButton.setOpaque(false);
@@ -1386,18 +1400,21 @@ public class RunPokemon extends JFrame {
 			isOver = true;
 			mainGamePanel.stopGeneralTimer();
 			mainGamePanel.stopPlayCurSound();
-			this.setVisible(false);
-			this.popMissionInfoBoard();
-			curBackMusicFileName = "end_victory.mp3";
-			this.playBackgroundMusic();
+			//this.setVisible(false);
+			JOptionPane.showMessageDialog(this, "GG ! YOU WON THIS. CLOSE THE DIALOG TO CHECK YOUR STATUS. YOU GOT 15s");
+			//curBackMusicFileName = "end_victory.mp3";
+			//this.playBackgroundMusic();
+			startEndTimer();
 		}
 		
 		if (gameModel.isLost()){
 			//missionBoard.setText("<html>YOU LOST<br>&nbsp;&nbsp;&nbsp;THE GAME IS OVER</html>");
 			isLost = true;
 			isOver = true;
-			this.setVisible(false);
-			this.popMissionInfoBoard();
+			//this.setVisible(false);
+			//this.popMissionInfoBoard();
+			JOptionPane.showMessageDialog(this, "SIGH ! YOU DID NOT MAKE THIS. CLOSE THE DIALOG TO CHECK YOUR STATUS. YOU GOT 15s");
+			startEndTimer();
 		}
 	}
 	
@@ -1977,5 +1994,40 @@ public class RunPokemon extends JFrame {
 			ItemLootPlayerThread.interrupt();
 		}
 	}	
+	
+	
+	
+	/***************** End Timer ******************/
+	////////////Item Timer ////////////
+	private Timer endTimer;
+	private int endCounter;
+
+	public void startEndTimer() {
+		if (isLost = true){
+			curBackMusicFileName = "lose_dva.mp3";
+		}
+		else{
+			curBackMusicFileName = "gg.mp3";
+		}
+		playBackgroundMusic();
+		endCounter = 0;
+		endTimer = new Timer(delayInMillis * 20, new endTimerListener());
+		endTimer.start();
+	}
+	
+
+	private class endTimerListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// reset the counter when go beyond 50	
+			endCounter++;
+			if (endCounter > 15){
+				endTimer.stop();
+				System.exit(0);
+			}
+		}
+	}
+	
 }
 

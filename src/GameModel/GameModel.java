@@ -328,7 +328,8 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	public double calculateCurCaughtChance(Pokemon p){
-		double chance = (3 * p.getMaxHP() - 2.25 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		System.out.println("catch chance: " + chance);
 		return chance;
 	}
 	
