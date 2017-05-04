@@ -20,6 +20,7 @@ public class WildPokemonGenerator implements Serializable{
 	
 	private static ArrayList<Double> EncounterThresholdList;
 	
+	/*
 	public static WildPokemonGenerator getInstance(){
 		if (uniqueInstance == null){
 			uniqueInstance = new WildPokemonGenerator();
@@ -27,9 +28,10 @@ public class WildPokemonGenerator implements Serializable{
 		
 		return uniqueInstance;
 	}
+	*/
 	
 	// constructor to initiate the list
-	private WildPokemonGenerator() {			
+	public WildPokemonGenerator() {			
 		// build the list
 		buildPokedexList();
 		

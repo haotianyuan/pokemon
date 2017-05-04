@@ -10,9 +10,9 @@ public class WildPokemonGeneratorTest {
 
 	@Test
 	public void test() {
-		WildPokemonGenerator pGenerator = WildPokemonGenerator.getInstance();
+		WildPokemonGenerator pGenerator = new WildPokemonGenerator();
 		
-		/*
+		
 		//////////////// Common ////////////////
 		System.out.println("Common:");
 		for (int i = 0; i < 10; i++){
@@ -46,14 +46,15 @@ public class WildPokemonGeneratorTest {
 		for (int i = 0; i < 5; i++){
 			System.out.println( "   " + i + " " + ((Pokemon) pGenerator.getLegend()).getClass().getName());
 		}
-		*/
+		
 		
 		
 		///////////// Random /////////////////
 		System.out.println("Random:");
-		for (int i = 0; i < 100; i++){
+		for (int i = 0; i < 1000; i++){
 			Pokemon p = pGenerator.generatePokemon();
 			System.out.println( "   " + i + ". " + p.getSpecy().getName());
+			System.out.println(p.getIntro());
 			if (p.getSpecy() == Pokedex.MewTwo){
 				System.out.println("------> I FIND IT <------");
 			}

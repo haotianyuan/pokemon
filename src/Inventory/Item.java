@@ -9,8 +9,6 @@ package Inventory;
 
 import java.io.Serializable;
 
-import Trainer.Trainer;
-
 public abstract class Item implements Serializable{
 
 	private static final long serialVersionUID = -4211980594163873451L;

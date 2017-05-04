@@ -1,14 +1,10 @@
 package Inventory;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
-import Pokemon.Pokemon;
-import Trainer.Trainer;
 
 public class ItemCollection implements TableModel, Serializable{
 
@@ -111,6 +107,18 @@ public class ItemCollection implements TableModel, Serializable{
 		
 		if (type == ItemType.CAPTURE_POTION_SMALL){
 			return new CapturePotion_Small();
+		}
+		
+		if (type == ItemType.HEAL_POTION_LARGE){
+			return new HealPotion_Large();
+		}
+		
+		if (type == ItemType.HEAL_POTION_MEDIUM){
+			return new HealPotion_Medium();
+		}
+		
+		if (type == ItemType.HEAL_POTION_SMALL){
+			return new HealPotion_Small();
 		}
 		
 		if (type == ItemType.STEP_POTION_LARGE){

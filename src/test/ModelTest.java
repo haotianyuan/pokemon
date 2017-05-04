@@ -16,6 +16,7 @@ import Mission.MissionType;
 import Pokemon.Abra;
 import Pokemon.Mew;
 import Pokemon.Pokemon;
+import Pokemon.WildPokemonGenerator;
 import Trainer.Trainer;
 
 public class ModelTest {
@@ -39,20 +40,6 @@ public class ModelTest {
 		tempPoint.setLocation(0, 0);
 		model.update();
 		
-		for (int i = 0; i < 200; i ++){
-			if (Math.random() < 0.25){
-				model.moveTrainer(Direction.WEST);
-			}
-			else if (Math.random() > 0.75){
-				model.moveTrainer(Direction.EAST);
-			}
-			else if (Math.random() > 0.5 && Math.random() < 0.75){
-				model.moveTrainer(Direction.NORTH);
-			}
-			else{
-				model.moveTrainer(Direction.SOUTH);
-			}
-		}
 		
 		assertTrue(!model.isLost());
 		assertTrue(!model.isWin());
@@ -62,30 +49,27 @@ public class ModelTest {
 		assertFalse(model.getCurMap().getBlock(0, 0).isPassable());
 		
 		model.chooseMap("00");
-		model.teleportOnline(new Point(2, 40));
-		model.teleportOnline(new Point(2, 0));
-		model.chooseMap("01");
-		model.teleportOnline(new Point(2, 40));
-		model.teleportOnline(new Point(40, 4));
-		model.teleportOnline(new Point(2, 2));
-		model.chooseMap("02");
-		model.teleportOnline(new Point(2, 40));
-		model.teleportOnline(new Point(4, 1));
-		model.teleportOnline(new Point(2, 0));
-		model.chooseMap("10");
-		model.teleportOnline(new Point(2, 1));
-		model.teleportOnline(new Point(40, 40));
-		model.teleportOnline(new Point(3, 3));
-		model.chooseMap("11");
-		model.teleportOnline(new Point(1, 40));
-		model.teleportOnline(new Point(2, 1));
-		model.teleportOnline(new Point(2, 40));
-		model.teleportOnline(new Point(40, 40));
-		model.chooseMap("12");
-		model.teleportOnline(new Point(1, 40));
-		model.teleportOnline(new Point(2, 1));
-		model.teleportOnline(new Point(20, 13));
-		model.teleportOnline(new Point(24, 13));
+		for (int i = 0; i < 41 ; i++){
+			for (int j = 0; j < 41 ; j ++){
+				model.chooseMap("00");
+				model.teleportOnline(new Point(i, j));
+				model.chooseMap("01");
+				model.teleportOnline(new Point(i, j));
+				model.chooseMap("02");
+				model.teleportOnline(new Point(i, j));
+				model.chooseMap("10");
+				model.teleportOnline(new Point(i, j));
+				model.chooseMap("11");
+				model.teleportOnline(new Point(i, j));
+				model.chooseMap("12");
+				model.teleportOnline(new Point(i, j));
+			}
+
+		}
+		
+		model.isTeleporting();
+		model.doneTeleporting();
+
 		model.chooseMap("13");
 
 		model.setEncounteredThisBlock(false);
@@ -107,10 +91,45 @@ public class ModelTest {
 		model.calculateCurRunChance(new Mew("hi"));
 		for (int i = 0; i < 100; i ++){
 			model.checkIfCaughtPokemon(new Mew("hi"));
+			model.checkIfRunPokemon(new Mew("hi"));
+		}
+		
+		model.createTrainer("hi");
+		Trainer ttt = model.getTrainer();
+		WildPokemonGenerator gen = new WildPokemonGenerator();
+		
+		for (int l = 0; l < 50; l ++){
+			Pokemon p = gen.generatePokemon();
+			for (int i = 0; i < 12; i ++){
+				ttt.addItem(ItemType.ROCK);
+				ttt.useItem(0, p);
+				model.checkIfRunPokemon(p);
+			}
 		}
 		
 		
-
+		model.chooseMap("10");
+		model.setLocation(30, 9);
 		
+		
+		for (int i = 0; i < 8000; i ++){
+			model.generateLoot(0.5);
+			if (Math.random() < 0.25){
+				model.moveTrainer(Direction.WEST);
+			}
+			else if (Math.random() > 0.75){
+				model.moveTrainer(Direction.EAST);
+			}
+			else if (Math.random() > 0.5 && Math.random() < 0.75){
+				model.moveTrainer(Direction.NORTH);
+			}
+			else{
+				model.moveTrainer(Direction.SOUTH);
+			}
+		}
+
+		model.getCurMap().printMapInSymbol();
+		assertTrue(model.getCurMap().getMapSize_X() == 42);
+		assertTrue(model.getCurMap().getMapSize_Y() == 42);
 	}
 }

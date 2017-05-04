@@ -2,7 +2,6 @@ package GameModel;
 
 import java.awt.Point;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Observable;
 
 import Inventory.Item;
@@ -38,7 +37,7 @@ public class GameModel extends Observable implements Serializable{
 	private boolean teleporting = false;
 	
 	// battle information
-	private WildPokemonGenerator wildPokemonGenerator = WildPokemonGenerator.getInstance();
+	private WildPokemonGenerator wildPokemonGenerator;
 	private boolean encounteredThisBlock = false;	// flag to check if just encounter a pokemon before move
 	
 	// game information
@@ -299,6 +298,7 @@ public class GameModel extends Observable implements Serializable{
 			}
 			// encounter the pokemon
 			else{
+				wildPokemonGenerator = new WildPokemonGenerator();
 				curTrainer.setCurEncounterPokemon(wildPokemonGenerator.generatePokemon());
 				this.setEncounteredThisBlock(true);
 				update();
@@ -328,7 +328,7 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	public double calculateCurCaughtChance(Pokemon p){
-		double chance = (3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture()) / (3 * p.getMaxHP());
+		double chance = ((double)(3 * p.getMaxHP() - 2 * p.getCurHP()) * p.getCurCapRate() * (1 + curTrainer.getBonusCapture())) / ((double)(3 * p.getMaxHP()));
 		System.out.println("catch chance: " + chance);
 		return chance;
 	}
@@ -351,7 +351,9 @@ public class GameModel extends Observable implements Serializable{
 	}
 	
 	public double calculateCurRunChance(Pokemon p){
-		double chance = (1 - p.getCurHP() / p.getMaxHP()) * (1 + p.getCurRunChance()) * (1 - curTrainer.getReducedRun());
+		double chance = p.getCurRunChance() * (2.0 - ((double)p.getCurHP()) / ((double)p.getMaxHP())) * (1 - curTrainer.getReducedRun());
+		System.out.println("run chance: " + chance);
+		System.out.println("run chance: " + chance);
 		return chance;
 	}
 	

@@ -4,7 +4,10 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import GameModel.GameModel;
 import Inventory.*;
+import Pokemon.Mew;
+import Pokemon.Pokemon;
 import Trainer.Trainer;
 
 public class InventoryTest {
@@ -44,6 +47,28 @@ public class InventoryTest {
 		collection.addItem(ItemType.BAIT);
 		collection.addItem(ItemType.BAIT);
 		
+		System.out.println(collection.getItemType(0));
+		System.out.println(collection.getValueAt(0, 1));
+		
+		GameModel model = new GameModel("tmt", null);
+		Pokemon p = new Mew("hi");
+		Trainer t = new Trainer("lol");
+		
+		for (int i = 0; i < 1000; i ++){
+			ItemType type = model.generateLoot(0.5);
+			if (type != null){
+				collection.addItem(type);
+				System.out.println(collection.getItem(0).getInfo());
+				System.out.println(collection.getItem(0).getEffectMessage());
+				if (Math.random() > 0.5){
+					collection.useItem(0, p);
+				}
+				else{
+					collection.useItem(0, t);
+				}
+			}
+
+		}
 	}
 }
  

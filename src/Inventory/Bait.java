@@ -1,14 +1,13 @@
 package Inventory;
 
 import Pokemon.Pokemon;
-import Trainer.Trainer;
 
 public class Bait extends Item{
 
 	private static final long serialVersionUID = 5729623957892624516L;
 	
-	private double reducedCaptureRate = -0.10;
-	private double reducedRunChance = 0.10;
+	private double reducedCaptureRate = -0.05;
+	private double reducedRunChance = 0.05;
 	
 	// extra
 	//private int extendTurn;

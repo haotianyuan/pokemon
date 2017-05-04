@@ -7,6 +7,7 @@ import org.junit.Test;
 import GameModel.Direction;
 import Inventory.ItemCollection;
 import Inventory.ItemType;
+import Pokemon.Caterpie;
 import Trainer.Trainer;
 
 public class TrainerTest {
@@ -31,8 +32,26 @@ public class TrainerTest {
 		assertTrue(trn.getRow() == 2);
 		assertTrue(trn.getCol() == 1);
 		trn.addItem(ItemType.BAIT);
-		ItemCollection ic = trn.getInventory();
-		assertTrue(ic.getRowCount() == 2);
+		
+		Caterpie caterpie = new Caterpie("caterpie");
+		trn.getPokemonCollection();
+		trn.setCurEncounterPokemon(caterpie);
+		trn.getCurEncounterPokemon();
+		trn.incrementBonusTurn(1);
+		trn.decrementBonusTurn(1);
+		trn.getTotalStepCount();
+		trn.getBonusTurn();
+		trn.useItem(0, ItemType.BAIT);
+		trn.checkItemUsable(0, ItemType.BAIT);
+		trn.getInventory();
+		
+		for (int i  = 0; i < trn.getRowCount(); i ++){
+			for (int j = 0; j < trn.getColumnCount(); j ++){
+				System.out.println(trn.getValueAt(i, j));
+			}
+		}
+		
+		
 	}
 
 }

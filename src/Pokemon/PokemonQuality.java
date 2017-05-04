@@ -48,6 +48,6 @@ public enum PokemonQuality {
 	// TODO: need an algorithm to generate a run chance
 	private double runGenerator(int capRate){
 		//return (double)(1 - capRate);
-		return 0.3;
+		return 0.125;
 	}
 }

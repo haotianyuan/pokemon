@@ -155,7 +155,9 @@ public class MainGameView extends JPanel implements Observer{
 			trainerMidOnScreenY = (curY - 1) * MapBlockSize;
 		}
 		else if (onMapTrainerMid.y >= 1152){
-			System.out.println("mark here");
+			
+			//System.out.println("mark here");
+			
 			trainerMidOnScreenY = 2 * VisionRadius_Y - (gameModel.getCurMap().getMapSize_Y() - curY - 1.5) * MapBlockSize;
 		}
 		else{

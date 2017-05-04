@@ -194,39 +194,41 @@ public abstract class Pokemon implements TableModel, Serializable{
 	
 
 	public double getCurCapRate(){
-		return basicCapRate * (1 + increasedCapRate);
+		return (double)basicCapRate * (1 + increasedCapRate);
 	}
 	
 	public double getCurRunChance(){
-		return basicRunChance * (1 - reducedRunChance);
+		return (double)basicRunChance * (1 + reducedRunChance);
 	}
 		
 	public void incrementAlteredCapRate(double incre){
-		this.increasedCapRate *= (1 + incre);
+		this.increasedCapRate = incre + this.increasedCapRate;
 		if(this.increasedCapRate > 1){
 			this.increasedCapRate = 1.0;
 		}
 	}
 	
 	public void decrementAlteredCapRate(double decre){
-		this.increasedCapRate *= (1 - decre);
+		this.increasedCapRate =  - decre + this.increasedCapRate;
 		if(this.increasedCapRate < 0){
 			this.increasedCapRate = 0;
 		}
 	}
 	
 	public void incrementAlteredRunChance(double incre){
-		this.reducedRunChance *= (1 + incre);
+		this.reducedRunChance += incre;
 		if (this.reducedRunChance > 1){
 			this.reducedRunChance = 1;
 		}
 	}
 	
 	public void decrementAlteredRunChance(double decre){
-		this.reducedRunChance *= (1 - decre);
+		this.reducedRunChance -= decre;
+		/*
 		if (this.reducedRunChance < 0){
 			this.reducedRunChance = 0;
 		}
+		*/
 	}
 	
 	/*

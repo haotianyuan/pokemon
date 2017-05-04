@@ -17,6 +17,7 @@ import Pokemon.Mew;
 import Pokemon.MewTwo;
 import Pokemon.Pidgey;
 import Pokemon.Pokedex;
+import Pokemon.Pokemon;
 import Pokemon.PokemonCollection;
 import Pokemon.PokemonQuality;
 import Pokemon.Rattata;
@@ -71,6 +72,14 @@ public class PokemonTest {
 		caterpie.incrementHP(10);
 		caterpie.decrementHP(10);
 		caterpie.recordCapTurn(10);
+		
+		assertTrue(caterpie.getCurCapRate()<1);
+		assertTrue(caterpie.getCurRunChance()<1);
+		caterpie.incrementAlteredCapRate(0);
+		caterpie.decrementAlteredCapRate(0);
+		caterpie.incrementAlteredRunChance(0);
+		caterpie.decrementAlteredRunChance(0);
+		
 		assertTrue(caterpie.getBasicRunChance() < 1);
 		assertTrue(caterpie.getBasicCapRate() < 1);
 		assertTrue(caterpie.getCapHpLimit() <100);
@@ -83,7 +92,7 @@ public class PokemonTest {
 		assertEquals(caterpie.getSpecy(), Pokedex.Caterpie);
 		assertEquals(caterpie.getQuality(), PokemonQuality.COMMON);
 		assertEquals(caterpie.getNickName(), "mike");
-		assertEquals(caterpie.getName(), "caterpie");
+		assertTrue(caterpie.getName().equals("Caterpie"));
 		
 		for (int i = 0 ;i < 20; i ++){
 			caterpie.decrementHP(10);
@@ -97,7 +106,15 @@ public class PokemonTest {
 		
 		PokemonCollection a=new PokemonCollection();
 		a.addPokemon(mew);
+		System.out.println(a.getPokemon(0).getSpecy().getQuality().getEncounterRate());
+		assertTrue(a.getPokemon(0).getSpecy() == Pokedex.Mew);
+		assertTrue(a.getSize() == 1);
 		a.addTableModelListener(null);
+		assertTrue(a.getCommonNum() == 0);
+		assertTrue(a.getUncommonNum() == 0);
+		assertTrue(a.getRareNum() == 0);
+		assertTrue(a.getEpicNum() == 0);
+		assertTrue(a.getLegendNum() == 1);
 		a.getColumnClass(0);
 		a.getColumnClass(1);
 		a.getColumnClass(2);
@@ -116,7 +133,26 @@ public class PokemonTest {
 		assertEquals(null,a.getColumnName(5));
 		assertEquals(null,a.getColumnName(9));
 		assertEquals(null,a.getColumnClass(99));
-
+		
+		
+		for (int i = 0; i < a.getRowCount(); i ++){
+			for (int j = 0; j < a.getColumnCount(); j ++){
+				System.out.println(a.getValueAt(i, j));
+				System.out.println(a.getColumnName(j));
+			}
+		}
+		
+		Pokemon mmm = new Mew("mmmm");
+		
+		for (int i = 0; i < mmm.getRowCount(); i ++){
+			for (int j = 0; j < mmm.getColumnCount(); j ++){
+				System.out.println(mmm.getValueAt(i, j));
+				System.out.println(mmm.getColumnName(j));
+			}
+		}
+		
+		assertFalse(mmm.isCellEditable(0, 0));
+		
 
 }
 }

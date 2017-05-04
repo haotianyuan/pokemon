@@ -2,15 +2,11 @@ package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.ComponentOrientation;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.Point;
-import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -22,7 +18,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -63,8 +58,6 @@ import Mission.Mission;
 import Mission.MissionType;
 import Pokemon.Pokedex;
 import Pokemon.Pokemon;
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
 import javazoom.jlgui.basicplayer.BasicPlayer;
 import javazoom.jlgui.basicplayer.BasicPlayerException;
 
@@ -148,8 +141,8 @@ public class RunPokemon extends JFrame {
 		// start the battle
 		if (gameModel.getTrainer().getCurEncounterPokemon() != null){
 			mainGamePanel.playTransitionAnimation();
-			while (!mainGamePanel.InteractEnable());
-			mainGamePanel.setVisible(false);
+			//while (!mainGamePanel.InteractEnable());
+			//mainGamePanel.setVisible(false);
 		}
 	}
 		

@@ -127,6 +127,7 @@ public class Mission implements TableModel, Serializable{
 		return this.legendRequirement;
 	}
 	
+	/*
 	public void incrementStepCap(int num){
 		this.stepCap += num;
 	}
@@ -134,6 +135,7 @@ public class Mission implements TableModel, Serializable{
 	public void decrementStepCap(int num){
 		this.stepCap -= num;
 	}
+	*/
 	
 	// Check if the mission is failed
 	public boolean checkMissionFailed(Trainer curTrainer){

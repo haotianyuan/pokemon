@@ -1,7 +1,6 @@
 package Inventory;
 
 import Pokemon.Pokemon;
-import Trainer.Trainer;
 
 public class SafariBall extends Item{
 	
