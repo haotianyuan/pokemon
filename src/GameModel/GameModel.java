@@ -353,7 +353,6 @@ public class GameModel extends Observable implements Serializable{
 	public double calculateCurRunChance(Pokemon p){
 		double chance = p.getCurRunChance() * (2.0 - ((double)p.getCurHP()) / ((double)p.getMaxHP())) * (1 - curTrainer.getReducedRun());
 		System.out.println("run chance: " + chance);
-		System.out.println("run chance: " + chance);
 		return chance;
 	}
 	

@@ -1247,10 +1247,22 @@ public class BattleView extends JPanel implements Observer{
 				gameModel.getTrainer().justCaught = true;
 			}
 			else{
+				
 				// TODO: playEscapeAnimation();
 				// set board info
 				battleInfoBoard.setText("<html>THE WILD POKEMON ESCAPED FROM THE BALL<br>KEEP IT UP</html>");
-				repaint();
+				if (gameModel.checkIfRunPokemon(gameModel.getTrainer().getCurEncounterPokemon())){
+					// TODO: playRunAwayAnimation();
+					// set board info
+					battleInfoBoard.setText("<html>THE WILD POKEMON RUNS AWAY<br>BATTLE END</html>");
+					gameModel.getTrainer().justCaught = false;
+					this.playTransitionAnimation();
+				}
+				else{
+					// set board info
+					battleInfoBoard.setText("<html>THE WILD POKEMON IS STILL THERE<br>KEEP IT UP</html>");
+					repaint();
+				}
 			}
 			
 		}
